@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELW Kräftemeldungen</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: auto;
+      padding: 10px;
+      background: #f5f5f5;
+    }
+
+    h2 {
+      color: #c4001a;
+    }
+
+    .card {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    input {
+      padding: 10px;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 8px 12px;
+      background: #c4001a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .msg {
+      font-family: monospace;
+      background: #eee;
+      padding: 9px;
+      border-radius: 6px;
+      margin: 10px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+    }
+
+    .time {
+      color: #666;
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
+    .error {
+      color: #b00020;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .ok {
+      color: #0a7a2f;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>ELW Kräftemeldungen</h2>
+
+    <input id="pw" type="password" placeholder="Passwort eingeben" />
+    <br />
+    <button onclick="loadMessages()">Meldungen laden</button>
+
+    <div id="status"></div>
+  </div>
+
+  <div id="list"></div>
+
+  <script>
+    const url = "https://wjqltuuebwxcymdbydwl.supabase.co/functions/v1/elw-read";
+
+    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcWx0dXVlYnd4Y3ltZGJ5ZHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzAwNTgsImV4cCI6MjA4OTI0NjA1OH0.amTfF56s3OlLeE_H8P_-c_hA9M6IEBu9kF2Z7fdiAmk";
+
+    async function loadMessages() {
+      const password = document.getElementById("pw").value;
+      const list = document.getElementById("list");
+      const status = document.getElementById("status");
+
+      list.innerHTML = "";
+      status.innerHTML = "";
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-elw-password": password,
+            "apikey": apiKey,
+            "Authorization": "Bearer " + apiKey
+          },
+          body: JSON.stringify({})
+        });
+
+        const text = await res.text();
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error("Server liefert keine gültige JSON-Antwort: " + text);
+        }
+
+        if (!res.ok) {
+          throw new Error(data.error || data.message || ("HTTP " + res.status));
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          status.innerHTML = '<div class="ok">Keine Meldungen vorhanden.</div>';
+          return;
+        }
+
+        status.innerHTML = '<div class="ok">' + data.length + ' Meldung(en) geladen.</div>';
+
+        data.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "card";
+
+          const time = item.created_at
+            ? new Date(item.created_at).toLocaleString("de-DE")
+            : "-";
+
+          const meldung = String(item.meldung || "");
+
+          div.innerHTML = `
+            <div class="time">${time}</div>
+            <div class="msg"></div>
+            <button type="button">Kopieren</button>
+          `;
+
+          div.querySelector(".msg").textContent = meldung;
+          div.querySelector("button").addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(meldung);
+              alert("Kopiert");
+            } catch {
+              alert("Kopieren fehlgeschlagen");
+            }
+          });
+
+          list.appendChild(div);
+        });
+      } catch (err) {
+        status.innerHTML =
+          '<div class="error">' +
+          (err instanceof Error ? err.message : "Unbekannter Fehler") +
+          '</div>';
+      }
+    }
+  </script>
+
+</body>
+</html>
