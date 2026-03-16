@@ -13,8 +13,35 @@
       background: #f5f5f5;
     }
 
-    h2 {
+    .headerRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .headerTitle {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .headerTitle h2 {
+      margin: 0;
       color: #c4001a;
+    }
+
+    .logoBox {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logoBox img {
+      height: 70px;
+      width: auto;
+      display: block;
+      object-fit: contain;
     }
 
     .card {
@@ -77,19 +104,39 @@
       font-size: 13px;
       margin-top: 6px;
     }
+
+    @media (max-width: 640px) {
+      .headerRow {
+        align-items: flex-start;
+      }
+
+      .logoBox img {
+        height: 56px;
+      }
+    }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>VSR Kräftemeldungen</h2>
+    <div class="headerRow">
+      <div class="headerTitle">
+        <h2>VSR Kräftemeldungen</h2>
+      </div>
 
-    <input id="pw" type="password" placeholder="Passwort eingeben" />
-    <br />
-    <button onclick="manualLoad()">Meldungen laden</button>
+      <div class="logoBox">
+        <img src="logo.png" alt="VSR Logo" />
+      </div>
+    </div>
 
-    <div id="status"></div>
-    <div class="muted">Automatische Aktualisierung aller 2 Minuten</div>
+    <div style="margin-top: 14px;">
+      <input id="pw" type="password" placeholder="Passwort eingeben" />
+      <br />
+      <button onclick="manualLoad()">Meldungen laden</button>
+
+      <div id="status"></div>
+      <div class="muted">Automatische Aktualisierung aller 2 Minuten</div>
+    </div>
   </div>
 
   <div id="list"></div>
@@ -190,14 +237,14 @@
       await loadMessages(true);
     }
 
-    // Automatisch alle 60 Sekunden neu laden
+    // Automatisch alle 2 Minuten neu laden
     setInterval(() => {
       const password = document.getElementById("pw").value.trim();
 
       if (!password) return;
 
       loadMessages(false);
-    }, 1200000);
+    }, 120000);
   </script>
 
 </body>
