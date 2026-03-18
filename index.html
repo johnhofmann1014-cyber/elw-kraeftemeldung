@@ -14,20 +14,20 @@
     }
 
     .card {
-      background: white;
-      padding: 10px 12px 12px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
+  background: white;
+  padding: 8px 12px 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
 
     .headerRow {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
 
     .headerTitle {
       min-width: 0;
@@ -35,28 +35,27 @@
     }
 
     .headerTitle h2 {
-      margin: 0;
-      padding: 0;
-      color: #c4001a;
-      line-height: 1.1;
-      font-size: 2rem;
-    }
+  margin: 0;
+  padding: 0;
+  color: #c4001a;
+  line-height: 1.1;
+  font-size: 2rem;
+}
 
     .logoBox {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: -50px;
-    }
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
 
-    .logoBox img {
-      height: 8px;
-      width: auto;
-      display: block;
-      object-fit: contain;
-      margin-top: 0;
-    }
+.logoBox img {
+  height: 100px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  margin-top: 0;
+}
 
     .topControls {
       margin-top: 0;
@@ -79,23 +78,14 @@
       border-radius: 6px;
       cursor: pointer;
       margin-top: 4px;
+      margin-right: 8px;
     }
 
-    .msg {
-      font-family: monospace;
-      background: #eee;
-      padding: 6px;
-      border-radius: 4px;
-      margin: 4px 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11px;
-    }
-
-    .time {
-      color: #666;
-      font-size: 11px;
-      margin-bottom: 6px;
+    .buttonRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 4px;
     }
 
     .error {
@@ -114,6 +104,52 @@
       color: #666;
       font-size: 12px;
       margin-top: 4px;
+    }
+
+    .tableWrap {
+      overflow-x: auto;
+    }
+
+    .forcesTable {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      font-size: 14px;
+    }
+
+    .forcesTable th,
+    .forcesTable td {
+      border: 1px solid #444;
+      padding: 8px 10px;
+    }
+
+    .forcesTable th {
+      background: #efefef;
+      text-align: center;
+    }
+
+    .forcesTable td:first-child,
+    .forcesTable th:first-child {
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .forcesTable td:not(:first-child),
+    .forcesTable th:not(:first-child) {
+      text-align: center;
+      width: 70px;
+    }
+
+    .copyCell {
+      width: 110px !important;
+      text-align: center !important;
+      white-space: nowrap;
+    }
+
+    .copyBtnSmall {
+      padding: 6px 10px;
+      margin: 0;
+      font-size: 12px;
     }
 
     @media (max-width: 640px) {
@@ -141,6 +177,15 @@
       input {
         max-width: 100%;
       }
+
+      .forcesTable {
+        font-size: 12px;
+      }
+
+      .forcesTable th,
+      .forcesTable td {
+        padding: 6px 8px;
+      }
     }
   </style>
 </head>
@@ -159,8 +204,11 @@
 
     <div class="topControls">
       <input id="pw" type="password" placeholder="Passwort eingeben" />
-      <br />
-      <button onclick="manualLoad()">Meldungen laden</button>
+
+      <div class="buttonRow">
+        <button onclick="manualLoad()">Meldungen laden</button>
+        <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
+      </div>
 
       <div id="status"></div>
       <div class="muted">Automatische Aktualisierung aller 2 Minuten</div>
@@ -173,19 +221,142 @@
     const url = "https://wjqltuuebwxcymdbydwl.supabase.co/functions/v1/elw-read";
     const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcWx0dXVlYnd4Y3ltZGJ5ZHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzAwNTgsImV4cCI6MjA4OTI0NjA1OH0.amTfF56s3OlLeE_H8P_-c_hA9M6IEBu9kF2Z7fdiAmk";
 
-    let lastPassword = "";
+    let lastLoadedData = [];
+
+    function parseForceLine(line) {
+      const parts = String(line || "")
+        .split(";")
+        .map((x) => x.trim())
+        .filter((x) => x.length > 0);
+
+      return {
+        staffel: parts[0] || "",
+        zf: parts[1] || "",
+        gf: parts[2] || "",
+        hf: parts[3] || "",
+        zh: parts[4] || "",
+        sth: parts[5] || "",
+        soh: parts[6] || ""
+      };
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function buildSingleRowHtml(r) {
+      return `
+        <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
+          <tr>
+            <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
+            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
+            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
+            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
+            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
+            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
+            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    function buildSingleRowText(r) {
+      return [
+        r.staffel,
+        r.zf,
+        r.gf,
+        r.hf,
+        r.zh,
+        r.sth,
+        r.soh
+      ].join("\t");
+    }
+
+    async function copyHtmlAndText(html, text, successText = "Kopiert") {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
+          }),
+        ]);
+        alert(successText);
+      } catch {
+        try {
+          await navigator.clipboard.writeText(text);
+          alert(successText);
+        } catch {
+          alert("Kopieren fehlgeschlagen");
+        }
+      }
+    }
+
+    function renderTable(data) {
+      const list = document.getElementById("list");
+
+      if (!Array.isArray(data) || data.length === 0) {
+        list.innerHTML = "";
+        return;
+      }
+
+      const rows = data.map((item, index) => {
+        const parsed = parseForceLine(item.meldung);
+        return `
+          <tr>
+            <td>${escapeHtml(parsed.staffel)}</td>
+            <td>${escapeHtml(parsed.zf)}</td>
+            <td>${escapeHtml(parsed.gf)}</td>
+            <td>${escapeHtml(parsed.hf)}</td>
+            <td>${escapeHtml(parsed.zh)}</td>
+            <td>${escapeHtml(parsed.sth)}</td>
+            <td>${escapeHtml(parsed.soh)}</td>
+            <td class="copyCell">
+              <button class="copyBtnSmall" type="button" onclick="copySingleForce(${index})">Kopieren</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      list.innerHTML = `
+        <div class="card">
+          <div class="tableWrap">
+            <table class="forcesTable">
+              <thead>
+                <tr>
+                  <th>Staffel</th>
+                  <th>ZF</th>
+                  <th>GF</th>
+                  <th>HF</th>
+                  <th>zH</th>
+                  <th>STH</th>
+                  <th>SOH</th>
+                  <th class="copyCell">Aktion</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
 
     async function loadMessages(showErrors = false) {
       const password = document.getElementById("pw").value.trim();
-      const list = document.getElementById("list");
       const status = document.getElementById("status");
+      const list = document.getElementById("list");
 
       if (!password) {
         status.innerHTML = '<div class="error">Bitte zuerst Passwort eingeben.</div>';
         return;
       }
 
-      lastPassword = password;
       status.innerHTML = "";
 
       try {
@@ -213,43 +384,16 @@
           throw new Error(data.error || data.message || ("HTTP " + res.status));
         }
 
-        list.innerHTML = "";
+        lastLoadedData = Array.isArray(data) ? data : [];
 
         if (!Array.isArray(data) || data.length === 0) {
+          list.innerHTML = "";
           status.innerHTML = '<div class="ok">Keine Meldungen für heute vorhanden.</div>';
           return;
         }
 
         status.innerHTML = '<div class="ok">' + data.length + ' Meldung(en) geladen.</div>';
-
-        data.forEach((item) => {
-          const div = document.createElement("div");
-          div.className = "card";
-
-          const time = item.created_at
-            ? new Date(item.created_at).toLocaleString("de-DE")
-            : "-";
-
-          const meldung = String(item.meldung || "");
-
-          div.innerHTML = `
-            <div class="time">${time}</div>
-            <div class="msg"></div>
-            <button type="button">Kopieren</button>
-          `;
-
-          div.querySelector(".msg").textContent = meldung;
-          div.querySelector("button").addEventListener("click", async () => {
-            try {
-              await navigator.clipboard.writeText(meldung);
-              alert("Kopiert");
-            } catch {
-              alert("Kopieren fehlgeschlagen");
-            }
-          });
-
-          list.appendChild(div);
-        });
+        renderTable(data);
 
       } catch (err) {
         if (showErrors) {
@@ -265,12 +409,60 @@
       await loadMessages(true);
     }
 
+    async function copySingleForce(index) {
+      if (!Array.isArray(lastLoadedData) || !lastLoadedData[index]) {
+        alert("Keine Kräftemeldung gefunden.");
+        return;
+      }
+
+      const parsed = parseForceLine(lastLoadedData[index].meldung);
+      const html = buildSingleRowHtml(parsed);
+      const text = buildSingleRowText(parsed);
+
+      await copyHtmlAndText(html, text, "Staffel als Tabelle kopiert");
+    }
+
+    async function copyAllForces() {
+      if (!Array.isArray(lastLoadedData) || lastLoadedData.length === 0) {
+        alert("Es sind keine geladenen Kräftemeldungen vorhanden.");
+        return;
+      }
+
+      const rows = lastLoadedData.map((item) => parseForceLine(item.meldung));
+
+      const htmlTable = `
+        <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
+          ${rows
+            .map(
+              (r) => `
+            <tr>
+              <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
+              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
+              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
+              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
+              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
+              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
+              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
+            </tr>
+          `
+            )
+            .join("")}
+        </table>
+      `;
+
+      const plainText = rows
+        .map((r) =>
+          [r.staffel, r.zf, r.gf, r.hf, r.zh, r.sth, r.soh].join("\t")
+        )
+        .join("\n");
+
+      await copyHtmlAndText(htmlTable, plainText, "Alle Kräfte als Tabelle kopiert");
+    }
+
     // Automatisch alle 2 Minuten neu laden
     setInterval(() => {
       const password = document.getElementById("pw").value.trim();
-
       if (!password) return;
-
       loadMessages(false);
     }, 120000);
   </script>
