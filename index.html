@@ -1,803 +1,368 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VSR Meldeboard</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VSR Meldeboard</title>
 
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 12px;
-      background: #f2f2f2;
-      color: #111;
-    }
+<style>
+* { box-sizing: border-box; }
 
-    .pageCenter {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 12px;
+  background: #f2f2f2;
+}
 
-    .topWrap {
-      width: min(100%, 1180px);
-    }
+.pageCenter {
+  display: flex;
+  justify-content: center;
+}
 
-    #list {
-      margin-top: 10px;
-    }
+.topWrap {
+  width: min(100%, 1180px);
+}
 
-    .card {
-      background: #fff;
-      padding: 10px 14px 12px;
-      border-radius: 12px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
+.card {
+  background: #fff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
 
-    .headCard {
-      width: 100%;
-    }
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+}
 
-    .headerRow {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
+.headerTitle h2 {
+  margin: 0;
+  color: #c4001a;
+}
 
-    .headerTitle {
-      min-width: 0;
-      flex: 1;
-    }
+.logoBox img {
+  height: 70px;
+}
 
-    .headerTitle h2 {
-      margin: 0;
-      color: #c4001a;
-      line-height: 1.05;
-      font-size: 1.65rem;
-    }
+/* INPUT + BUTTON */
+input {
+  padding: 8px;
+  width: 320px;
+  max-width: 100%;
+  margin-bottom: 8px;
+}
 
-    .logoBox {
-      flex-shrink: 0;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-    }
+button {
+  padding: 8px 14px;
+  background: #c92222;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 6px;
+}
 
-    .logoBox img {
-      height: 76px;
-      width: auto;
-      display: block;
-      object-fit: contain;
-    }
+/* STATUS FIX (kein Springen mehr) */
+.statusLine {
+  min-height: 24px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
 
-    .topControls {
-      margin-top: 0;
-    }
+.ok {
+  color: #0a7a2f;
+  font-size: 14px;
+}
 
-    input {
-      padding: 8px 10px;
-      width: 320px;
-      max-width: 100%;
-      margin-bottom: 8px;
-      font-size: 15px;
-    }
+.error {
+  color: #b00020;
+  font-size: 14px;
+}
 
-    button {
-      padding: 8px 14px;
-      background: #c92222;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 2px;
-      margin-right: 6px;
-      font-size: 14px;
-    }
+/* BOARD */
+.boardViewport {
+  display: flex;
+  justify-content: center;
+}
 
-    .buttonRow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 2px;
-    }
+.boardScaleStage {
+  transform-origin: top center;
+}
 
-    .error {
-      color: #b00020;
-      font-weight: bold;
-      margin-top: 8px;
-    }
+.boardOuter {
+  width: 1320px;
+  background: #e53935;
+  padding: 12px;
+  transition: 0.4s;
+}
 
-    .ok {
-      color: #0a7a2f;
-      margin-top: 8px;
-      font-size: 14px;
-    }
+.flashNew {
+  animation: flashGreen 0.8s;
+}
 
-    .muted {
-      color: #666;
-      font-size: 12px;
-      margin-top: 4px;
-    }
+@keyframes flashGreen {
+  0% { background: #3cb371; }
+  100% { background: #e53935; }
+}
 
-    .meldeboardShell {
-      width: 100%;
-    }
+.boardInner {
+  background: #e8e8e8;
+  padding: 10px;
+}
 
-    .boardViewport {
-      width: 100%;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-    }
+.boardGrid {
+  display: grid;
+  grid-template-columns:
+    165px 110px 50px 50px 72px 72px 112px 72px 62px 62px 62px 110px;
+  column-gap: 25px;
+  margin-bottom: 6px;
+}
 
-    .boardScaleStage {
-      transform-origin: top center;
-    }
+.boardCell {
+  border: 3px solid #444;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  background: #e8e8e8;
+}
 
-    .boardOuter {
-      width: 1320px;
-      background: #e53935;
-      padding: 12px;
-      transition: background-color 0.5s ease;
-    }
+.plusCell {
+  position: relative;
+}
 
-    .flashNew {
-      animation: flashGreen 0.8s ease;
-    }
-
-    @keyframes flashGreen {
-      0% {
-        background: #41b95c;
-      }
-      100% {
-        background: #e53935;
-      }
-    }
-
-    .boardInner {
-      background: #e8e8e8;
-      padding: 10px 8px 8px;
-    }
-
-    .boardTitleWrap {
-      display: grid;
-      grid-template-columns: 1fr 120px;
-      align-items: end;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .boardTitle {
-      text-align: center;
-      font-size: 50px;
-      font-weight: 500;
-      line-height: 1;
-    }
-
-    .boardTitleBox {
-      height: 42px;
-      border: 3px solid #444;
-      background: #e8e8e8;
-    }
-
-    .boardGrid {
-      width: 100%;
-      display: grid;
-      grid-template-columns:
-        165px   /* StaffelAbk */
-        110px   /* Ankunft */
-        50px    /* ZF */
-        50px    /* GF */
-        72px    /* HF */
-        72px    /* zH */
-        112px   /* STH */
-        72px    /* SOH */
-        62px    /* Arzt */
-        62px    /* Berufsretter */
-        62px    /* Tierarzt */
-        110px;  /* Abreise */
-      column-gap: 25px;
-      row-gap: 0;
-      align-items: stretch;
-    }
-
-    .boardHeader {
-      margin-bottom: 6px;
-    }
-
-    .boardHeaderCell {
-      min-height: 36px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      text-align: center;
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.02;
-      padding: 0 2px 2px;
-      color: #111;
-    }
-
-    .boardRow {
-      margin-bottom: 8px;
-    }
-
-    .boardCell {
-      min-height: 86px;
-      border: 3px solid #444;
-      background: #e8e8e8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 10px;
-      font-size: 30px;
-      line-height: 1;
-      color: #111;
-    }
-
-    .boardCell.left {
-      justify-content: flex-start;
-      align-items: center;
-      text-align: left;
-      white-space: normal;
-      word-break: break-word;
-      font-size: 30px;
-      padding-left: 10px;
-    }
-
-    .boardCell.time {
-      font-size: 30px;
-    }
-
-    .boardCell.light {
-      border-color: #b7b7b7;
-    }
-
-    .plusCell {
-      position: relative;
-    }
-
-    .plusCell::before {
-      content: "+";
-      position: absolute;
-      left: -25px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 30px;
-      line-height: 1;
-      font-weight: 700;
-      color: #222;
-      z-index: 2;
-    }
-
-    .legend {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-top: 6px;
-      font-size: 23px;
-      line-height: 1.28;
-      color: #111;
-    }
-
-    .legendCol div {
-      white-space: nowrap;
-      letter-spacing: -0.1px;
-    }
-
-    .standRow {
-      margin-top: 6px;
-      font-size: 13px;
-      line-height: 1.1;
-      text-align: right;
-      color: #111;
-    }
-
-    .copyArea {
-      margin-top: 8px;
-    }
-
-    @media (max-width: 900px) {
-      body {
-        padding: 8px;
-      }
-
-      .topWrap {
-        width: 100%;
-      }
-
-      .headerTitle h2 {
-        font-size: 1.45rem;
-      }
-
-      .logoBox img {
-        height: 62px;
-      }
-
-      input {
-        width: 100%;
-        max-width: 100%;
-      }
-    }
-  </style>
+.plusCell::before {
+  content: "+";
+  position: absolute;
+  left: -25px;
+  font-size: 28px;
+  font-weight: bold;
+}
+</style>
 </head>
+
 <body>
 
-  <div class="pageCenter">
-    <div class="topWrap">
-      <div class="card headCard">
-        <div class="headerRow">
-          <div class="headerTitle">
-            <h2>VSR Meldeboard</h2>
-          </div>
+<div class="pageCenter">
+  <div class="topWrap">
 
-          <div class="logoBox">
-            <img src="logo.png" alt="VSR Logo" />
-          </div>
+    <div class="card">
+      <div class="headerRow">
+        <div class="headerTitle">
+          <h2>VSR Meldeboard</h2>
         </div>
 
-        <div class="topControls">
-          <input id="pw" type="password" placeholder="Passwort eingeben" />
-
-          <div class="buttonRow">
-            <button onclick="manualLoad()">Meldungen laden</button>
-            <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
-          </div>
-
-          <div id="status"></div>
-          <div class="muted">Automatische Aktualisierung alle 10 Sekunden · angezeigt werden nur Meldungen der letzten 6 Stunden</div>
+        <div class="logoBox">
+          <img src="logo.png" alt="Logo">
         </div>
       </div>
 
-      <div id="list"></div>
+      <input id="pw" type="password" placeholder="Passwort eingeben" />
+
+      <div>
+        <button onclick="manualLoad()">Meldungen laden</button>
+        <button onclick="copyAll()">Alle Kräfte kopieren</button>
+      </div>
+
+      <!-- FESTER STATUS -->
+      <div id="status" class="statusLine">
+        <div class="ok">0 aktuelle Meldung(en) geladen.</div>
+      </div>
+
+      <div style="font-size:12px;color:#666;">
+        Automatische Aktualisierung alle 10 Sekunden · letzte 6 Stunden
+      </div>
     </div>
+
+    <div id="list"></div>
+
   </div>
+</div>
 
-  <script>
-    const url = "https://wjqltuuebwxcymdbydwl.supabase.co/functions/v1/elw-read";
-    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcWx0dXVlYnd4Y3ltZGJ5ZHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzAwNTgsImV4cCI6MjA4OTI0NjA1OH0.amTfF56s3OlLeE_H8P_-c_hA9M6IEBu9kF2Z7fdiAmk";
+<script>
 
-    let lastLoadedData = [];
-    const TOTAL_BOARD_ROWS = 15;
-    const AUTO_REFRESH_MS = 10000;
-    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+const url = "https://wjqltuuebwxcymdbydwl.supabase.co/functions/v1/elw-read";
+const apiKey = "DEIN_API_KEY";
 
-    function getStaffelAbkuerzung(fullName) {
-      const name = String(fullName || "").trim().toLowerCase();
+let lastData = [];
 
-      const map = {
-        "brh rhs sachsen ost": "SNO",
-        "brh rhs mittelsachsen": "MSN",
-        "brh rhs südwestsachsen": "SWS",
-        "brh rhs suedwestsachsen": "SWS",
-        "brh rhs landkreis leipzig": "LKL",
-        "brh rhs kamenzer land": "KML",
-        "brh rhs thüringen südost": "TSO",
-        "brh rhs thueringen suedost": "TSO",
-        "drk rhs leipzig": "RKL",
-        "drk rhs aue schwarzenberg": "ASZ",
-        "drk rhs freital": "FTL",
-        "drk rhs löbau": "LÖB",
-        "drk rhs loebau": "LÖB",
-        "drk rhs görlitz": "GRL",
-        "drk rhs goerlitz": "GRL",
-        "dlrg leipzig": "DLL",
-        "asb rhs zwickau": "SAZ",
-        "asb rhs chemnitz": "SAC",
-        "asb rhs dresden": "SAD",
-        "asb rhs ostthüringen": "OTH",
-        "asb rhs ostthueringen": "OTH",
-        "juh rhs leipzig": "JUL",
-        "juh rhs dresden": "JDD"
-      };
+const SIX_HOURS = 6 * 60 * 60 * 1000;
 
-      return map[name] || fullName || "";
+/* ========================= */
+/* PARSEN */
+
+function parse(line) {
+  const p = String(line).split(";").map(x => x.trim());
+
+  return {
+    staffel: p[0] || "",
+    abk: getAbk(p[0]),
+    ankunft: p[1] || "",
+    zf: p[2] || "",
+    gf: p[3] || "",
+    hf: p[4] || "",
+    zh: p[5] || "",
+    sth: p[6] || "",
+    soh: p[7] || "",
+    arzt: p[8] || "",
+    br: p[9] || "",
+    ta: p[10] || "",
+    abreise: p[11] || ""
+  };
+}
+
+function getAbk(name) {
+  return (name || "").substring(0, 3).toUpperCase();
+}
+
+/* ========================= */
+/* FILTER */
+
+function filterData(data) {
+  const now = Date.now();
+
+  const last6h = data.filter(x => {
+    const t = new Date(x.created_at).getTime();
+    return now - t <= SIX_HOURS;
+  });
+
+  // NEUSTE ZUERST
+  last6h.sort((a, b) =>
+    new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  // NUR LETZTE JE STAFFEL
+  const map = new Map();
+
+  for (const item of last6h) {
+    const staffel = parse(item.meldung).staffel;
+    if (!map.has(staffel)) {
+      map.set(staffel, item);
     }
+  }
 
-    function parseForceLine(line) {
-      const parts = String(line || "")
-        .split(";")
-        .map((x) => x.trim());
+  return Array.from(map.values());
+}
 
-      const fullStaffelName = parts[0] || "";
+/* ========================= */
+/* RENDER */
 
-      return {
-        staffel: fullStaffelName,
-        staffelAbk: getStaffelAbkuerzung(fullStaffelName),
-        ankunft: parts[1] || "",
-        zf: parts[2] || "",
-        gf: parts[3] || "",
-        hf: parts[4] || "",
-        zh: parts[5] || "",
-        sth: parts[6] || "",
-        soh: parts[7] || "",
-        arzt: parts[8] || "",
-        berufsretter: parts[9] || "",
-        tierarzt: parts[10] || "",
-        abreise: parts[11] || ""
-      };
-    }
+function render(data, highlight = false) {
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
+  const rows = data.map(x => parse(x.meldung));
 
-    function emptyBoardRow() {
-      return {
-        staffel: "",
-        staffelAbk: "",
-        ankunft: "",
-        zf: "",
-        gf: "",
-        hf: "",
-        zh: "",
-        sth: "",
-        soh: "",
-        arzt: "",
-        berufsretter: "",
-        tierarzt: "",
-        abreise: ""
-      };
-    }
+  const html = rows.map(r => `
+    <div class="boardGrid">
+      <div class="boardCell">${r.abk}</div>
+      <div class="boardCell">${r.ankunft}</div>
+      <div class="boardCell">${r.zf}</div>
+      <div class="boardCell">${r.gf}</div>
+      <div class="boardCell">${r.hf}</div>
+      <div class="boardCell plusCell">${r.zh}</div>
+      <div class="boardCell">${r.sth}</div>
+      <div class="boardCell">${r.soh}</div>
+      <div class="boardCell">${r.arzt}</div>
+      <div class="boardCell">${r.br}</div>
+      <div class="boardCell">${r.ta}</div>
+      <div class="boardCell">${r.abreise}</div>
+    </div>
+  `).join("");
 
-    function getMessageTime(item) {
-      const raw = item?.created_at || item?.timestamp || item?.time || "";
-      const t = new Date(raw).getTime();
-      return Number.isFinite(t) ? t : 0;
-    }
-
-    function getMessageIdentity(item) {
-      return String(item?.id || "") + "|" + String(item?.created_at || item?.timestamp || item?.time || "") + "|" + String(item?.meldung || "");
-    }
-
-    function getFilteredMeldungen(data) {
-      if (!Array.isArray(data)) return [];
-
-      const now = Date.now();
-
-      const lastSixHours = data.filter((item) => {
-        const t = getMessageTime(item);
-        if (!t) return false;
-        return now - t <= SIX_HOURS_MS;
-      });
-
-      lastSixHours.sort((a, b) => getMessageTime(b) - getMessageTime(a));
-
-      const seenStaffeln = new Set();
-      const result = [];
-
-      for (const item of lastSixHours) {
-        const parsed = parseForceLine(item.meldung);
-        const key = parsed.staffel.trim().toLowerCase();
-
-        if (!key) continue;
-        if (seenStaffeln.has(key)) continue;
-
-        seenStaffeln.add(key);
-        result.push(item);
-      }
-
-      return result;
-    }
-
-    function buildBoardRows(data) {
-      const rows = Array.isArray(data)
-        ? data.map((item) => parseForceLine(item.meldung))
-        : [];
-
-      while (rows.length < TOTAL_BOARD_ROWS) {
-        rows.push(emptyBoardRow());
-      }
-
-      return rows.slice(0, TOTAL_BOARD_ROWS);
-    }
-
-    function buildSingleRowHtml(r) {
-      return `
-        <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
-          <tr>
-            <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
-          </tr>
-        </table>
-      `;
-    }
-
-    function buildSingleRowText(r) {
-      return [
-        r.staffel,
-        r.zf,
-        r.gf,
-        r.hf,
-        r.zh,
-        r.sth,
-        r.soh
-      ].join("\t");
-    }
-
-    async function copyHtmlAndText(html, text, successText = "Kopiert") {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/html": new Blob([html], { type: "text/html" }),
-            "text/plain": new Blob([text], { type: "text/plain" }),
-          }),
-        ]);
-        alert(successText);
-      } catch {
-        try {
-          await navigator.clipboard.writeText(text);
-          alert(successText);
-        } catch {
-          alert("Kopieren fehlgeschlagen");
-        }
-      }
-    }
-
-    function renderBoard(data, highlight = false) {
-      const list = document.getElementById("list");
-      const rows = buildBoardRows(data);
-      const flashClass = highlight ? "flashNew" : "";
-
-      const boardRowsHtml = rows.map((row) => {
-        return `
-          <div class="boardGrid boardRow">
-            <div class="boardCell left">${escapeHtml(row.staffelAbk || "")}</div>
-            <div class="boardCell time">${escapeHtml(row.ankunft || "")}</div>
-            <div class="boardCell">${escapeHtml(row.zf || "")}</div>
-            <div class="boardCell">${escapeHtml(row.gf || "")}</div>
-            <div class="boardCell">${escapeHtml(row.hf || "")}</div>
-            <div class="boardCell plusCell">${escapeHtml(row.zh || "")}</div>
-            <div class="boardCell">${escapeHtml(row.sth || "")}</div>
-            <div class="boardCell">${escapeHtml(row.soh || "")}</div>
-            <div class="boardCell light">${escapeHtml(row.arzt || "")}</div>
-            <div class="boardCell light">${escapeHtml(row.berufsretter || "")}</div>
-            <div class="boardCell light">${escapeHtml(row.tierarzt || "")}</div>
-            <div class="boardCell time">${escapeHtml(row.abreise || "")}</div>
-          </div>
-        `;
-      }).join("");
-
-      list.innerHTML = `
-        <div class="meldeboardShell">
-          <div class="boardViewport" id="boardViewport">
-            <div class="boardScaleStage" id="boardScaleStage">
-              <div class="boardOuter ${flashClass}">
-                <div class="boardInner">
-                  <div class="boardTitleWrap">
-                    <div class="boardTitle">Meldeboard</div>
-                    <div class="boardTitleBox"></div>
-                  </div>
-
-                  <div class="boardGrid boardHeader">
-                    <div class="boardHeaderCell">StaffelAbk.</div>
-                    <div class="boardHeaderCell">Ankunft</div>
-                    <div class="boardHeaderCell">ZF</div>
-                    <div class="boardHeaderCell">GF</div>
-                    <div class="boardHeaderCell">HF</div>
-                    <div class="boardHeaderCell">zH</div>
-                    <div class="boardHeaderCell">STH</div>
-                    <div class="boardHeaderCell">SOH</div>
-                    <div class="boardHeaderCell">Arzt</div>
-                    <div class="boardHeaderCell">Berufs<br>retter</div>
-                    <div class="boardHeaderCell">Tier<br>arzt</div>
-                    <div class="boardHeaderCell">Abreise</div>
-                  </div>
-
-                  ${boardRowsHtml}
-
-                  <div class="legend">
-                    <div class="legendCol">
-                      <div>SNO&nbsp; BRH Sachsen-Ost</div>
-                      <div>MSN&nbsp; BRH Mittelsachsen</div>
-                      <div>SWS&nbsp; BRH Südwestsachsen</div>
-                      <div>LKL&nbsp; BRH Landkreis Leipzig</div>
-                      <div>KML&nbsp; BRH Kamenzer Land</div>
-                      <div>TSO&nbsp; BRH Thüringen Südost</div>
-                    </div>
-
-                    <div class="legendCol">
-                      <div>RKL&nbsp; DRK Leipzig</div>
-                      <div>ASZ&nbsp; DRK Aue Schwarzenberg</div>
-                      <div>FTL&nbsp; DRK Freital</div>
-                      <div>LÖB&nbsp; DRK Löbau</div>
-                      <div>GRL&nbsp; DRK Görlitz</div>
-                      <div>DLL&nbsp; DLRG Leipzig</div>
-                    </div>
-
-                    <div class="legendCol">
-                      <div>SAZ&nbsp; ASB Zwickau</div>
-                      <div>SAC&nbsp; ASB Chemnitz</div>
-                      <div>SAD&nbsp; ASB Dresden</div>
-                      <div>OTH&nbsp; ASB Ostthüringen</div>
-                      <div>JUL&nbsp; JUH Leipzig</div>
-                      <div>JDD&nbsp; JUH Dresden</div>
-                    </div>
-
-                    <div class="legendCol">
-                      <div>&nbsp;</div>
-                      <div>zH&nbsp; zusätzl. Hunde</div>
-                      <div>STH&nbsp; Suchtrupphelfer</div>
-                      <div>SOH&nbsp; sonstige Helfer</div>
-                    </div>
-                  </div>
-
-                  <div class="standRow">Stand 2025_02_28</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="copyArea">
-            <button type="button" onclick="copyAllForces()">Alle Kräfte kopieren</button>
+  document.getElementById("list").innerHTML = `
+    <div class="boardViewport">
+      <div class="boardScaleStage">
+        <div class="boardOuter ${highlight ? "flashNew" : ""}">
+          <div class="boardInner">
+            ${html}
           </div>
         </div>
-      `;
+      </div>
+    </div>
+  `;
+}
 
-      fitBoardToViewport();
-    }
+/* ========================= */
+/* LOAD */
 
-    function fitBoardToViewport() {
-      const viewport = document.getElementById("boardViewport");
-      const stage = document.getElementById("boardScaleStage");
+async function load() {
+  const pw = document.getElementById("pw").value;
+  const status = document.getElementById("status");
 
-      if (!viewport || !stage) return;
+  if (!pw) {
+    status.innerHTML = "<div class='error'>Bitte Passwort eingeben</div>";
+    return;
+  }
 
-      const baseWidth = 1320;
-      const availableWidth = viewport.clientWidth || 1;
-      const autoScale = Math.min(1, availableWidth / baseWidth);
-      const extraScale = 0.9;
-
-      stage.style.transform = "scale(1)";
-      viewport.style.height = "auto";
-
-      const naturalHeight = stage.scrollHeight || stage.offsetHeight || 1;
-      const scale = autoScale * extraScale;
-
-      stage.style.transform = `scale(${scale})`;
-      stage.style.transformOrigin = "top center";
-      viewport.style.height = `${naturalHeight * scale}px`;
-    }
-
-    async function loadMessages(showErrors = false) {
-      const password = document.getElementById("pw").value.trim();
-      const status = document.getElementById("status");
-      const list = document.getElementById("list");
-
-      if (!password) {
-        status.innerHTML = '<div class="error">Bitte zuerst Passwort eingeben.</div>';
-        return;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "x-elw-password": pw,
+        "apikey": apiKey
       }
+    });
 
-      status.innerHTML = "";
+    const data = await res.json();
 
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-elw-password": password,
-            "apikey": apiKey,
-            "Authorization": "Bearer " + apiKey
-          },
-          body: JSON.stringify({})
-        });
+    const filtered = filterData(data);
 
-        const text = await res.text();
+    // NEUE ERKENNEN
+    const oldIds = new Set(lastData.map(x => x.id));
+    const hasNew = filtered.some(x => !oldIds.has(x.id));
 
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error("Server liefert keine gültige Antwort.");
-        }
+    lastData = filtered;
 
-        if (!res.ok) {
-          throw new Error(data.error || data.message || ("HTTP " + res.status));
-        }
+    // STATUS NUR ZAHL ÄNDERN
+    status.innerHTML = `<div class="ok">${filtered.length} aktuelle Meldung(en) geladen.</div>`;
 
-        const sourceData = Array.isArray(data) ? data : [];
-        const filtered = getFilteredMeldungen(sourceData);
+    render(filtered, hasNew);
 
-        const oldIds = new Set(lastLoadedData.map(getMessageIdentity));
-        const hasNewEntry = filtered.some((item) => !oldIds.has(getMessageIdentity(item)));
+  } catch (err) {
+    status.innerHTML = "<div class='error'>Fehler beim Laden</div>";
+  }
+}
 
-        lastLoadedData = filtered;
+/* ========================= */
+/* COPY */
 
-        if (filtered.length === 0) {
-          list.innerHTML = "";
-          status.innerHTML = '<div class="ok">Keine Meldungen der letzten 6 Stunden vorhanden.</div>';
-          return;
-        }
+function copyAll() {
 
-        status.innerHTML = '<div class="ok">' + filtered.length + ' aktuelle Meldung(en) geladen.</div>';
-        renderBoard(filtered, hasNewEntry);
+  if (!lastData.length) {
+    alert("Keine Daten vorhanden");
+    return;
+  }
 
-      } catch (err) {
-        if (showErrors) {
-          status.innerHTML =
-            '<div class="error">' +
-            (err instanceof Error ? err.message : "Unbekannter Fehler") +
-            '</div>';
-        }
-      }
-    }
+  const text = lastData.map(x => {
+    const r = parse(x.meldung);
+    return [
+      r.staffel,
+      r.zf,
+      r.gf,
+      r.hf,
+      r.zh,
+      r.sth,
+      r.soh
+    ].join("\t");
+  }).join("\n");
 
-    async function manualLoad() {
-      await loadMessages(true);
-    }
+  navigator.clipboard.writeText(text);
+  alert("Kopiert");
+}
 
-    async function copyAllForces() {
-      if (!Array.isArray(lastLoadedData) || lastLoadedData.length === 0) {
-        alert("Es sind keine aktuellen Kräftemeldungen vorhanden.");
-        return;
-      }
+/* ========================= */
 
-      const rows = lastLoadedData.map((item) => parseForceLine(item.meldung));
+function manualLoad() {
+  load();
+}
 
-      const htmlTable = `
-        <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
-          ${rows.map((r) => `
-            <tr>
-              <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
-            </tr>
-          `).join("")}
-        </table>
-      `;
+/* AUTO REFRESH */
+setInterval(load, 10000);
 
-      const plainText = rows
-        .map((r) =>
-          [
-            r.staffel,
-            r.zf,
-            r.gf,
-            r.hf,
-            r.zh,
-            r.sth,
-            r.soh
-          ].join("\t")
-        )
-        .join("\n");
-
-      await copyHtmlAndText(htmlTable, plainText, "Alle Kräfte als Tabelle kopiert");
-    }
-
-    function scheduleAutoRefresh() {
-      setTimeout(async function autoRefresh() {
-        const password = document.getElementById("pw").value.trim();
-        if (password) {
-          await loadMessages(false);
-        }
-        setTimeout(autoRefresh, AUTO_REFRESH_MS);
-      }, AUTO_REFRESH_MS);
-    }
-
-    window.addEventListener("resize", fitBoardToViewport);
-    scheduleAutoRefresh();
-  </script>
+</script>
 
 </body>
 </html>
