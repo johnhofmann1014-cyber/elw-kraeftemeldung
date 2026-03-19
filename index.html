@@ -111,12 +111,17 @@
     .error {
       color: #b00020;
       font-weight: bold;
-      margin-top: 8px;
+      margin-top: 0;
     }
+
+   .statusLine {
+  min-height: 24px;
+  margin-top: 8px;
+}
 
     .ok {
       color: #0a7a2f;
-      margin-top: 8px;
+      margin-top: 0;
       font-size: 14px;
     }
 
@@ -351,8 +356,10 @@
             <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
           </div>
 
-          <div id="status"></div>
-          <div class="muted">Automatische Aktualisierung alle 10 Sekunden · angezeigt werden nur Meldungen der letzten 6 Stunden</div>
+          <div id="status" class="statusLine">
+  <div class="ok">0 aktuelle Meldung(en) geladen.</div>
+</div>
+          <div class="muted">angezeigt werden nur Meldungen der letzten 6 Stunden</div>
         </div>
       </div>
 
@@ -686,7 +693,7 @@
         return;
       }
 
-      status.innerHTML = "";
+      
 
       try {
         const res = await fetch(url, {
@@ -721,22 +728,22 @@
 
         lastLoadedData = filtered;
 
-        if (filtered.length === 0) {
-          list.innerHTML = "";
-          status.innerHTML = '<div class="ok">Keine Meldungen der letzten 6 Stunden vorhanden.</div>';
-          return;
-        }
+        status.innerHTML = '<div class="ok">' + filtered.length + ' aktuelle Meldung(en) 	geladen.</div>';
 
-        status.innerHTML = '<div class="ok">' + filtered.length + ' aktuelle Meldung(en) geladen.</div>';
-        renderBoard(filtered, hasNewEntry);
+	if (filtered.length === 0) {
+  	list.innerHTML = "";
+  	return;
+	}
+
+	renderBoard(filtered, hasNewEntry);
 
       } catch (err) {
         if (showErrors) {
-          status.innerHTML =
-            '<div class="error">' +
-            (err instanceof Error ? err.message : "Unbekannter Fehler") +
-            '</div>';
-        }
+  		status.innerHTML =
+    		'<div class="error">' +
+    		(err instanceof Error ? err.message : "Unbekannter Fehler") +
+    		'</div>';
+	}
       }
     }
 
