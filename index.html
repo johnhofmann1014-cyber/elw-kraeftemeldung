@@ -3,241 +3,418 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VSR Kräftemeldungen</title>
+  <title>VSR Meldeboard</title>
   <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 12px;
+    background: #f2f2f2;
+    color: #111;
+  }
+
+  .pageCenter {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .topWrap {
+    width: min(100%, 1180px);
+  }
+
+  #list {
+    margin-top: 10px;
+  }
+
+  .card {
+    background: #fff;
+    padding: 10px 14px 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .headCard {
+    width: 100%;
+  }
+
+  .headerRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .headerTitle {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .headerTitle h2 {
+    margin: 0;
+    color: #c4001a;
+    line-height: 1.05;
+    font-size: 1.65rem;
+  }
+
+  .logoBox {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .logoBox img {
+    height: 76px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  .topControls {
+    margin-top: 0;
+  }
+
+  input {
+    padding: 8px 10px;
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+
+  button {
+    padding: 8px 14px;
+    background: #c92222;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 2px;
+    margin-right: 6px;
+    font-size: 14px;
+  }
+
+  .buttonRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .error {
+    color: #b00020;
+    font-weight: bold;
+    margin-top: 8px;
+  }
+
+  .ok {
+    color: #0a7a2f;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+
+  .muted {
+    color: #666;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .meldeboardShell {
+    width: 100%;
+  }
+
+  .boardViewport {
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+  }
+
+  .boardScaleStage {
+    transform-origin: top center;
+  }
+
+  .boardOuter {
+    width: 1320px;
+    background: #e53935;
+    padding: 12px;
+  }
+
+  .boardInner {
+    background: #e8e8e8;
+    padding: 10px 8px 8px;
+  }
+
+  .boardTitleWrap {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    align-items: end;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .boardTitle {
+    text-align: center;
+    font-size: 50px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .boardTitleBox {
+    height: 42px;
+    border: 3px solid #444;
+    background: #e8e8e8;
+  }
+
+  .boardGrid {
+    width: 120%;
+    display: grid;
+    grid-template-columns:
+      165px   /* StaffelAbk */
+      110px   /* Ankunft */
+      50px    /* ZF */
+      50px    /* GF */
+      72px   /* HF */
+      72px    /* zH */
+      112px   /* STH */
+      72px    /* SOH */
+      62px    /* Arzt */
+      62px    /* Berufsretter */
+      62px    /* Tierarzt */
+      110px;  /* Abreise */
+    column-gap: 25px;
+    row-gap: 0;
+    align-items: stretch;
+  }
+
+  .boardHeader {
+    margin-bottom: 6px;
+  }
+
+  .boardHeaderCell {
+    min-height: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.02;
+    padding: 0 2px 2px;
+    color: #111;
+  }
+
+  .boardRow {
+    margin-bottom: 8px;
+  }
+
+  .boardCell {
+    min-height: 86px;
+    border: 3px solid #444;
+    background: #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 30px;
+    line-height: 1;
+    color: #111;
+  }
+
+  .boardCell.left {
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    white-space: normal;
+    word-break: break-word;
+    font-size: 30px;
+    padding-left: 10px;
+  }
+
+  .boardCell.time {
+    font-size: 30px;
+  }
+
+  .boardCell.light {
+    border-color: #b7b7b7;
+  }
+
+  .plusCell {
+    position: relative;
+  }
+
+  .plusCell::before {
+    content: "+";
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 700;
+    color: #222;
+    z-index: 2;
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 6px;
+    font-size: 23px;
+    line-height: 1.28;
+    color: #111;
+  }
+
+  .legendCol div {
+    white-space: nowrap;
+    letter-spacing: -0.1px;
+  }
+
+  .standRow {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.1;
+    text-align: right;
+    color: #111;
+  }
+
+  .copyArea {
+    margin-top: 8px;
+  }
+
+  @media (max-width: 900px) {
     body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 6px 14px 14px;
-      background: #f5f5f5;
+      padding: 8px;
     }
 
-    .card {
-  background: white;
-  padding: 8px 12px 10px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-    .headerRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-    .headerTitle {
-      min-width: 0;
-      flex: 1;
+    .topWrap {
+      width: 100%;
     }
 
     .headerTitle h2 {
-  margin: 0;
-  padding: 0;
-  color: #c4001a;
-  line-height: 1.1;
-  font-size: 2rem;
-}
+      font-size: 1.45rem;
+    }
 
-    .logoBox {
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.logoBox img {
-  height: 100px;
-  width: auto;
-  display: block;
-  object-fit: contain;
-  margin-top: 0;
-}
-
-    .topControls {
-      margin-top: 0;
+    .logoBox img {
+      height: 62px;
     }
 
     input {
-      padding: 9px 10px;
-      width: 100%;
-      max-width: 320px;
-      margin-bottom: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
+      max-width: 100%;
     }
-
-    button {
-      padding: 9px 14px;
-      background: #c4001a;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 4px;
-      margin-right: 8px;
-    }
-
-    .buttonRow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 4px;
-    }
-
-    .error {
-      color: #b00020;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-
-    .ok {
-      color: #0a7a2f;
-      margin-top: 8px;
-      font-size: 14px;
-    }
-
-    .muted {
-      color: #666;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .tableWrap {
-      overflow-x: auto;
-    }
-
-    .forcesTable {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      font-size: 14px;
-    }
-
-    .forcesTable th,
-    .forcesTable td {
-      border: 1px solid #444;
-      padding: 8px 10px;
-    }
-
-    .forcesTable th {
-      background: #efefef;
-      text-align: center;
-    }
-
-    .forcesTable td:first-child,
-    .forcesTable th:first-child {
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    .forcesTable td:not(:first-child),
-    .forcesTable th:not(:first-child) {
-      text-align: center;
-      width: 70px;
-    }
-
-    .copyCell {
-      width: 110px !important;
-      text-align: center !important;
-      white-space: nowrap;
-    }
-
-    .copyBtnSmall {
-      padding: 6px 10px;
-      margin: 0;
-      font-size: 12px;
-    }
-
-    @media (max-width: 640px) {
-      body {
-        padding: 4px 10px 10px;
-      }
-
-      .card {
-        padding: 10px;
-      }
-
-      .headerRow {
-        gap: 10px;
-        margin-bottom: 6px;
-      }
-
-      .headerTitle h2 {
-        font-size: 1.6rem;
-      }
-
-      .logoBox img {
-        height: 60px;
-      }
-
-      input {
-        max-width: 100%;
-      }
-
-      .forcesTable {
-        font-size: 12px;
-      }
-
-      .forcesTable th,
-      .forcesTable td {
-        padding: 6px 8px;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <div class="headerRow">
-      <div class="headerTitle">
-        <h2>VSR Kräftemeldungen</h2>
+ <div class="pageCenter">
+  <div class="topWrap">
+    <div class="card headCard">
+      <div class="headerRow">
+        <div class="headerTitle">
+          <h2>VSR Meldeboard</h2>
+        </div>
+
+        <div class="logoBox">
+          <img src="logo.png" alt="VSR Logo" />
+        </div>
       </div>
 
-      <div class="logoBox">
-        <img src="logo.png" alt="VSR Logo" />
+      <div class="topControls">
+        <input id="pw" type="password" placeholder="Passwort eingeben" />
+
+        <div class="buttonRow">
+          <button onclick="manualLoad()">Meldungen laden</button>
+          <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
+        </div>
+
+        <div id="status"></div>
+        <div class="muted">Automatische Aktualisierung aller 2 Minuten</div>
       </div>
     </div>
 
-    <div class="topControls">
-      <input id="pw" type="password" placeholder="Passwort eingeben" />
-
-      <div class="buttonRow">
-        <button onclick="manualLoad()">Meldungen laden</button>
-        <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
-      </div>
-
-      <div id="status"></div>
-      <div class="muted">Automatische Aktualisierung aller 2 Minuten</div>
-    </div>
+    <div id="list"></div>
   </div>
-
-  <div id="list"></div>
+</div>
 
   <script>
     const url = "https://wjqltuuebwxcymdbydwl.supabase.co/functions/v1/elw-read";
     const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcWx0dXVlYnd4Y3ltZGJ5ZHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzAwNTgsImV4cCI6MjA4OTI0NjA1OH0.amTfF56s3OlLeE_H8P_-c_hA9M6IEBu9kF2Z7fdiAmk";
 
     let lastLoadedData = [];
+    const TOTAL_BOARD_ROWS = 15;
+
+
+	function getStaffelAbkuerzung(fullName) {
+  const name = String(fullName || "").trim().toLowerCase();
+
+  const map = {
+    "brh rhs sachsen ost": "SNO",
+    "brh rhs mittelsachsen": "MSN",
+    "brh rhs südwestsachsen": "SWS",
+    "brh rhs suedwestsachsen": "SWS",
+    "brh rhs landkreis leipzig": "LKL",
+    "brh rhs kamenzer land": "KML",
+    "brh rhs thüringen südost": "TSO",
+    "brh rhs thueringen suedost": "TSO",
+    "drk rhs leipzig": "RKL",
+    "drk rhs aue schwarzenberg": "ASZ",
+    "drk rhs freital": "FTL",
+    "drk rhs löbau": "LÖB",
+    "drk rhs loebau": "LÖB",
+    "drk rhs görlitz": "GRL",
+    "drk rhs goerlitz": "GRL",
+    "dlrg leipzig": "DLL",
+    "asb rhs zwickau": "SAZ",
+    "asb rhs chemnitz": "SAC",
+    "asb rhs dresden": "SAD",
+    "asb rhs ostthüringen": "OTH",
+    "asb rhs ostthueringen": "OTH",
+    "juh rhs leipzig": "JUL",
+    "juh rhs dresden": "JDD",
+    "demostaffel": "DEO"
+  };
+
+  return map[name] || fullName || "";
+}
+
 
     function parseForceLine(line) {
-      const parts = String(line || "")
-        .split(";")
-        .map((x) => x.trim())
-        .filter((x) => x.length > 0);
+  const parts = String(line || "")
+    .split(";")
+    .map((x) => x.trim());
 
-      return {
-        staffel: parts[0] || "",
-        zf: parts[1] || "",
-        gf: parts[2] || "",
-        hf: parts[3] || "",
-        zh: parts[4] || "",
-        sth: parts[5] || "",
-        soh: parts[6] || ""
-      };
+  const fullStaffelName = parts[0] || "";
+
+  return {
+    staffel: fullStaffelName,
+    staffelAbk: getStaffelAbkuerzung(fullStaffelName),
+    ankunft: parts[1] || "",
+    zf: parts[2] || "",
+    gf: parts[3] || "",
+    hf: parts[4] || "",
+    zh: parts[5] || "",
+    sth: parts[6] || "",
+    soh: parts[7] || "",
+    arzt: parts[8] || "",
+    berufsretter: parts[9] || "",
+    tierarzt: parts[10] || "",
+    abreise: parts[11] || ""
+  };
+}
+
+    function normalizeNumber(value) {
+      const v = String(value ?? "").trim();
+      if (!v) return "";
+      return v;
     }
 
     function escapeHtml(value) {
@@ -249,21 +426,51 @@
         .replaceAll("'", "&#39;");
     }
 
-    function buildSingleRowHtml(r) {
-      return `
-        <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
-          <tr>
-            <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
-            <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
-          </tr>
-        </table>
-      `;
+    function emptyBoardRow() {
+  return {
+    staffel: "",
+    staffelAbk: "",
+    ankunft: "",
+    zf: "",
+    gf: "",
+    hf: "",
+    zh: "",
+    sth: "",
+    soh: "",
+    arzt: "",
+    berufsretter: "",
+    tierarzt: "",
+    abreise: ""
+  };
+}
+
+    function buildBoardRows(data) {
+      const rows = Array.isArray(data)
+        ? data.map((item) => parseForceLine(item.meldung))
+        : [];
+
+      while (rows.length < TOTAL_BOARD_ROWS) {
+        rows.push(emptyBoardRow());
+      }
+
+      return rows.slice(0, TOTAL_BOARD_ROWS);
     }
+
+    function buildSingleRowHtml(r) {
+  return `
+    <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
+      <tr>
+        <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
+      </tr>
+    </table>
+  `;
+}
 
     function buildSingleRowText(r) {
       return [
@@ -273,7 +480,8 @@
         r.hf,
         r.zh,
         r.sth,
-        r.soh
+        r.soh,
+        
       ].join("\t");
     }
 
@@ -296,56 +504,132 @@
       }
     }
 
-    function renderTable(data) {
-      const list = document.getElementById("list");
+   function renderBoard(data) {
+  const list = document.getElementById("list");
+  const rows = buildBoardRows(data);
 
-      if (!Array.isArray(data) || data.length === 0) {
-        list.innerHTML = "";
-        return;
-      }
+  const boardRowsHtml = rows.map((row) => {
+    return `
+      <div class="boardGrid boardRow">
+        <div class="boardCell left">${escapeHtml(row.staffelAbk || "")}</div>
+        <div class="boardCell time">${escapeHtml(row.ankunft || "")}</div>
+        <div class="boardCell">${escapeHtml(row.zf || "")}</div>
+        <div class="boardCell">${escapeHtml(row.gf || "")}</div>
+        <div class="boardCell">${escapeHtml(row.hf || "")}</div>
+        <div class="boardCell plusCell">${escapeHtml(row.zh || "")}</div>
+        <div class="boardCell">${escapeHtml(row.sth || "")}</div>
+        <div class="boardCell">${escapeHtml(row.soh || "")}</div>
+        <div class="boardCell light">${escapeHtml(row.arzt || "")}</div>
+        <div class="boardCell light">${escapeHtml(row.berufsretter || "")}</div>
+        <div class="boardCell light">${escapeHtml(row.tierarzt || "")}</div>
+        <div class="boardCell time">${escapeHtml(row.abreise || "")}</div>
+      </div>
+    `;
+  }).join("");
 
-      const rows = data.map((item, index) => {
-        const parsed = parseForceLine(item.meldung);
-        return `
-          <tr>
-            <td>${escapeHtml(parsed.staffel)}</td>
-            <td>${escapeHtml(parsed.zf)}</td>
-            <td>${escapeHtml(parsed.gf)}</td>
-            <td>${escapeHtml(parsed.hf)}</td>
-            <td>${escapeHtml(parsed.zh)}</td>
-            <td>${escapeHtml(parsed.sth)}</td>
-            <td>${escapeHtml(parsed.soh)}</td>
-            <td class="copyCell">
-              <button class="copyBtnSmall" type="button" onclick="copySingleForce(${index})">Kopieren</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
+  list.innerHTML = `
+    <div class="meldeboardShell">
+      <div class="boardViewport" id="boardViewport">
+        <div class="boardScaleStage" id="boardScaleStage">
+          <div class="boardOuter">
+            <div class="boardInner">
+              <div class="boardTitleWrap">
+                <div class="boardTitle">Meldeboard</div>
+                <div class="boardTitleBox"></div>
+              </div>
 
-      list.innerHTML = `
-        <div class="card">
-          <div class="tableWrap">
-            <table class="forcesTable">
-              <thead>
-                <tr>
-                  <th>Staffel</th>
-                  <th>ZF</th>
-                  <th>GF</th>
-                  <th>HF</th>
-                  <th>zH</th>
-                  <th>STH</th>
-                  <th>SOH</th>
-                  <th class="copyCell">Aktion</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows}
-              </tbody>
-            </table>
+              <div class="boardGrid boardHeader">
+                <div class="boardHeaderCell">StaffelAbk.</div>
+                <div class="boardHeaderCell">Ankunft</div>
+                <div class="boardHeaderCell">ZF</div>
+                <div class="boardHeaderCell">GF</div>
+                <div class="boardHeaderCell">HF</div>
+                <div class="boardHeaderCell">zH</div>
+                <div class="boardHeaderCell">STH</div>
+                <div class="boardHeaderCell">SOH</div>
+                <div class="boardHeaderCell">Arzt</div>
+                <div class="boardHeaderCell">Berufs<br>retter</div>
+                <div class="boardHeaderCell">Tier<br>arzt</div>
+                <div class="boardHeaderCell">Abreise</div>
+              </div>
+
+              ${boardRowsHtml}
+
+              <div class="legend">
+                <div class="legendCol">
+                  <div>SNO&nbsp; BRH Sachsen-Ost</div>
+                  <div>MSN&nbsp; BRH Mittelsachsen</div>
+                  <div>SWS&nbsp; BRH Südwestsachsen</div>
+                  <div>LKL&nbsp; BRH Landkreis Leipzig</div>
+                  <div>KML&nbsp; BRH Kamenzer Land</div>
+                  <div>TSO&nbsp; BRH Thüringen Südost</div>
+                </div>
+
+                <div class="legendCol">
+                  <div>RKL&nbsp; DRK Leipzig</div>
+                  <div>ASZ&nbsp; DRK Aue Schwarzenberg</div>
+                  <div>FTL&nbsp; DRK Freital</div>
+                  <div>LÖB&nbsp; DRK Löbau</div>
+                  <div>GRL&nbsp; DRK Görlitz</div>
+                  <div>DLL&nbsp; DLRG Leipzig</div>
+                </div>
+
+                <div class="legendCol">
+                  <div>SAZ&nbsp; ASB Zwickau</div>
+                  <div>SAC&nbsp; ASB Chemnitz</div>
+                  <div>SAD&nbsp; ASB Dresden</div>
+                  <div>OTH&nbsp; ASB Ostthüringen</div>
+                  <div>JUL&nbsp; JUH Leipzig</div>
+                  <div>JDD&nbsp; JUH Dresden</div>
+                </div>
+
+                <div class="legendCol">
+                  <div>DEO&nbsp; Demostaffel</div>
+                  <div>&nbsp;</div>
+                  <div>zH&nbsp; zusätzl. Hunde</div>
+                  <div>STH&nbsp; Suchtrupphelfer</div>
+                  <div>SOH&nbsp; sonstige Helfer</div>
+                </div>
+              </div>
+
+              <div class="standRow">Stand 2025_02_28</div>
+            </div>
           </div>
         </div>
-      `;
-    }
+      </div>
+
+      <div class="copyArea">
+        <button type="button" onclick="copyAllForces()">Alle Kräfte kopieren</button>
+      </div>
+    </div>
+  `;
+
+  fitBoardToViewport();
+}
+
+
+function fitBoardToViewport() {
+  const viewport = document.getElementById("boardViewport");
+  const stage = document.getElementById("boardScaleStage");
+
+  if (!viewport || !stage) return;
+
+  const baseWidth = 1320;
+  const availableWidth = viewport.clientWidth || 1;
+
+  const autoScale = Math.min(1, availableWidth / baseWidth);
+  const extraScale = 0.9;
+
+  stage.style.transform = "scale(1)";
+  viewport.style.height = "auto";
+
+  const naturalHeight = stage.scrollHeight || stage.offsetHeight || 1;
+  const scale = autoScale * extraScale;
+
+  stage.style.transform = `scale(${scale})`;
+  stage.style.transformOrigin = "top center";
+  viewport.style.height = `${naturalHeight * scale}px`;
+}
 
     async function loadMessages(showErrors = false) {
       const password = document.getElementById("pw").value.trim();
@@ -393,7 +677,7 @@
         }
 
         status.innerHTML = '<div class="ok">' + data.length + ' Meldung(en) geladen.</div>';
-        renderTable(data);
+        renderBoard(data);
 
       } catch (err) {
         if (showErrors) {
@@ -409,19 +693,6 @@
       await loadMessages(true);
     }
 
-    async function copySingleForce(index) {
-      if (!Array.isArray(lastLoadedData) || !lastLoadedData[index]) {
-        alert("Keine Kräftemeldung gefunden.");
-        return;
-      }
-
-      const parsed = parseForceLine(lastLoadedData[index].meldung);
-      const html = buildSingleRowHtml(parsed);
-      const text = buildSingleRowText(parsed);
-
-      await copyHtmlAndText(html, text, "Staffel als Tabelle kopiert");
-    }
-
     async function copyAllForces() {
       if (!Array.isArray(lastLoadedData) || lastLoadedData.length === 0) {
         alert("Es sind keine geladenen Kräftemeldungen vorhanden.");
@@ -431,40 +702,46 @@
       const rows = lastLoadedData.map((item) => parseForceLine(item.meldung));
 
       const htmlTable = `
-        <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
-          ${rows
-            .map(
-              (r) => `
-            <tr>
-              <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
-              <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
-            </tr>
-          `
-            )
-            .join("")}
-        </table>
-      `;
+  <table border="1" style="border-collapse:collapse; font-family:Arial,sans-serif; font-size:11pt;">
+    ${rows.map((r) => `
+      <tr>
+        <td style="padding:6px 10px; text-align:left;">${escapeHtml(r.staffel)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zf)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.gf)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.hf)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.zh)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.sth)}</td>
+        <td style="padding:6px 10px; text-align:center;">${escapeHtml(r.soh)}</td>
+      </tr>
+    `).join("")}
+  </table>
+`;
 
-      const plainText = rows
-        .map((r) =>
-          [r.staffel, r.zf, r.gf, r.hf, r.zh, r.sth, r.soh].join("\t")
-        )
-        .join("\n");
+const plainText = rows
+  .map((r) =>
+    [
+      r.staffel,
+      r.zf,
+      r.gf,
+      r.hf,
+      r.zh,
+      r.sth,
+      r.soh
+    ].join("\t")
+  )
+  .join("\n");
 
       await copyHtmlAndText(htmlTable, plainText, "Alle Kräfte als Tabelle kopiert");
     }
 
-    // Automatisch alle 2 Minuten neu laden
     setInterval(() => {
       const password = document.getElementById("pw").value.trim();
       if (!password) return;
       loadMessages(false);
     }, 120000);
+
+window.addEventListener("resize", fitBoardToViewport);
+
   </script>
 
 </body>
