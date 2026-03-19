@@ -13,9 +13,11 @@ body {
   margin: 0;
   padding: 12px;
   background: #f2f2f2;
+  color: #111;
 }
 
 .pageCenter {
+  width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -26,7 +28,7 @@ body {
 
 .card {
   background: #fff;
-  padding: 10px 14px;
+  padding: 10px 14px 12px;
   border-radius: 12px;
   margin-bottom: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -46,25 +48,7 @@ body {
   height: 70px;
 }
 
-/* INPUT + BUTTON */
-input {
-  padding: 8px;
-  width: 320px;
-  max-width: 100%;
-  margin-bottom: 8px;
-}
-
-button {
-  padding: 8px 14px;
-  background: #c92222;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-right: 6px;
-}
-
-/* STATUS FIX (kein Springen mehr) */
+/* STATUS FIX */
 .statusLine {
   min-height: 24px;
   margin-top: 8px;
@@ -72,15 +56,8 @@ button {
   align-items: center;
 }
 
-.ok {
-  color: #0a7a2f;
-  font-size: 14px;
-}
-
-.error {
-  color: #b00020;
-  font-size: 14px;
-}
+.ok { color: #0a7a2f; }
+.error { color: #b00020; }
 
 /* BOARD */
 .boardViewport {
@@ -96,14 +73,14 @@ button {
   width: 1320px;
   background: #e53935;
   padding: 12px;
-  transition: 0.4s;
+  transition: background 0.5s;
 }
 
 .flashNew {
-  animation: flashGreen 0.8s;
+  animation: flash 0.8s;
 }
 
-@keyframes flashGreen {
+@keyframes flash {
   0% { background: #3cb371; }
   100% { background: #e53935; }
 }
@@ -140,7 +117,6 @@ button {
   position: absolute;
   left: -25px;
   font-size: 28px;
-  font-weight: bold;
 }
 </style>
 </head>
@@ -148,161 +124,143 @@ button {
 <body>
 
 <div class="pageCenter">
-  <div class="topWrap">
+<div class="topWrap">
 
-    <div class="card">
-      <div class="headerRow">
-        <div class="headerTitle">
-          <h2>VSR Meldeboard</h2>
-        </div>
+<div class="card">
+<div class="headerRow">
+<div class="headerTitle">
+<h2>VSR Meldeboard</h2>
+</div>
 
-        <div class="logoBox">
-          <img src="logo.png" alt="Logo">
-        </div>
-      </div>
+<div class="logoBox">
+<img src="logo.png">
+</div>
+</div>
 
-      <input id="pw" type="password" placeholder="Passwort eingeben" />
+<input id="pw" type="password" placeholder="Passwort eingeben" />
 
-      <div>
-        <button onclick="manualLoad()">Meldungen laden</button>
-        <button onclick="copyAll()">Alle Kräfte kopieren</button>
-      </div>
+<button onclick="manualLoad()">Laden</button>
+<button onclick="copyAllForces()">Kopieren</button>
 
-      <!-- FESTER STATUS -->
-      <div id="status" class="statusLine">
-        <div class="ok">0 aktuelle Meldung(en) geladen.</div>
-      </div>
+<div id="status" class="statusLine">
+<div class="ok">0 aktuelle Meldung(en) geladen.</div>
+</div>
 
-      <div style="font-size:12px;color:#666;">
-        Automatische Aktualisierung alle 10 Sekunden · letzte 6 Stunden
-      </div>
-    </div>
+<div style="font-size:12px;color:#666;">
+Automatische Aktualisierung alle 10 Sekunden · letzte 6 Stunden
+</div>
 
-    <div id="list"></div>
+</div>
 
-  </div>
+<div id="list"></div>
+
+</div>
 </div>
 
 <script>
-
 const url = "https://wjqltuuebwxcymdbydwl.supabase.co/functions/v1/elw-read";
-const apiKey = "DEIN_API_KEY";
+const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcWx0dXVlYnd4Y3ltZGJ5ZHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzAwNTgsImV4cCI6MjA4OTI0NjA1OH0.amTfF56s3OlLeE_H8P_-c_hA9M6IEBu9kF2Z7fdiAmk";
 
-let lastData = [];
-
+let lastLoadedData = [];
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 
-/* ========================= */
-/* PARSEN */
+/* ====================== */
 
-function parse(line) {
-  const p = String(line).split(";").map(x => x.trim());
-
+function parse(line){
+  const p = String(line).split(";").map(x=>x.trim());
   return {
-    staffel: p[0] || "",
-    abk: getAbk(p[0]),
-    ankunft: p[1] || "",
-    zf: p[2] || "",
-    gf: p[3] || "",
-    hf: p[4] || "",
-    zh: p[5] || "",
-    sth: p[6] || "",
-    soh: p[7] || "",
-    arzt: p[8] || "",
-    br: p[9] || "",
-    ta: p[10] || "",
-    abreise: p[11] || ""
-  };
+    staffel:p[0],
+    abk:(p[0]||"").substring(0,3).toUpperCase(),
+    ankunft:p[1],
+    zf:p[2],
+    gf:p[3],
+    hf:p[4],
+    zh:p[5],
+    sth:p[6],
+    soh:p[7],
+    arzt:p[8],
+    br:p[9],
+    ta:p[10],
+    abreise:p[11]
+  }
 }
 
-function getAbk(name) {
-  return (name || "").substring(0, 3).toUpperCase();
-}
+/* ====================== */
 
-/* ========================= */
-/* FILTER */
-
-function filterData(data) {
+function filterData(data){
   const now = Date.now();
 
-  const last6h = data.filter(x => {
+  const last6 = data.filter(x=>{
     const t = new Date(x.created_at).getTime();
-    return now - t <= SIX_HOURS;
+    return now - t < SIX_HOURS;
   });
 
-  // NEUSTE ZUERST
-  last6h.sort((a, b) =>
-    new Date(b.created_at) - new Date(a.created_at)
-  );
+  last6.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 
-  // NUR LETZTE JE STAFFEL
   const map = new Map();
 
-  for (const item of last6h) {
-    const staffel = parse(item.meldung).staffel;
-    if (!map.has(staffel)) {
-      map.set(staffel, item);
-    }
-  }
+  last6.forEach(m=>{
+    const s = parse(m.meldung).staffel;
+    map.set(s,m);
+  });
 
   return Array.from(map.values());
 }
 
-/* ========================= */
-/* RENDER */
+/* ====================== */
 
-function render(data, highlight = false) {
+function render(data,flash=false){
 
-  const rows = data.map(x => parse(x.meldung));
+  const rows = data.map(x=>parse(x.meldung));
 
-  const html = rows.map(r => `
-    <div class="boardGrid">
-      <div class="boardCell">${r.abk}</div>
-      <div class="boardCell">${r.ankunft}</div>
-      <div class="boardCell">${r.zf}</div>
-      <div class="boardCell">${r.gf}</div>
-      <div class="boardCell">${r.hf}</div>
-      <div class="boardCell plusCell">${r.zh}</div>
-      <div class="boardCell">${r.sth}</div>
-      <div class="boardCell">${r.soh}</div>
-      <div class="boardCell">${r.arzt}</div>
-      <div class="boardCell">${r.br}</div>
-      <div class="boardCell">${r.ta}</div>
-      <div class="boardCell">${r.abreise}</div>
-    </div>
+  const html = rows.map(r=>`
+  <div class="boardGrid">
+    <div class="boardCell">${r.abk}</div>
+    <div class="boardCell">${r.ankunft}</div>
+    <div class="boardCell">${r.zf}</div>
+    <div class="boardCell">${r.gf}</div>
+    <div class="boardCell">${r.hf}</div>
+    <div class="boardCell plusCell">${r.zh}</div>
+    <div class="boardCell">${r.sth}</div>
+    <div class="boardCell">${r.soh}</div>
+    <div class="boardCell">${r.arzt}</div>
+    <div class="boardCell">${r.br}</div>
+    <div class="boardCell">${r.ta}</div>
+    <div class="boardCell">${r.abreise}</div>
+  </div>
   `).join("");
 
   document.getElementById("list").innerHTML = `
-    <div class="boardViewport">
-      <div class="boardScaleStage">
-        <div class="boardOuter ${highlight ? "flashNew" : ""}">
-          <div class="boardInner">
-            ${html}
-          </div>
+  <div class="boardViewport">
+    <div class="boardScaleStage">
+      <div class="boardOuter ${flash ? "flashNew" : ""}">
+        <div class="boardInner">
+          ${html}
         </div>
       </div>
     </div>
+  </div>
   `;
 }
 
-/* ========================= */
-/* LOAD */
+/* ====================== */
 
-async function load() {
+async function load(){
+
   const pw = document.getElementById("pw").value;
   const status = document.getElementById("status");
 
-  if (!pw) {
-    status.innerHTML = "<div class='error'>Bitte Passwort eingeben</div>";
+  if(!pw){
+    status.innerHTML = "<div class='error'>Passwort fehlt</div>";
     return;
   }
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "x-elw-password": pw,
-        "apikey": apiKey
+  try{
+    const res = await fetch(url,{
+      method:"POST",
+      headers:{
+        "x-elw-password":pw,
+        "apikey":apiKey
       }
     });
 
@@ -310,33 +268,34 @@ async function load() {
 
     const filtered = filterData(data);
 
-    // NEUE ERKENNEN
-    const oldIds = new Set(lastData.map(x => x.id));
-    const hasNew = filtered.some(x => !oldIds.has(x.id));
+    const oldIds = new Set(lastLoadedData.map(x=>x.id));
+    const hasNew = filtered.some(x=>!oldIds.has(x.id));
 
-    lastData = filtered;
+    lastLoadedData = filtered;
 
-    // STATUS NUR ZAHL ÄNDERN
     status.innerHTML = `<div class="ok">${filtered.length} aktuelle Meldung(en) geladen.</div>`;
 
-    render(filtered, hasNew);
+    render(filtered,hasNew);
 
-  } catch (err) {
+  }catch(e){
     status.innerHTML = "<div class='error'>Fehler beim Laden</div>";
   }
 }
 
-/* ========================= */
-/* COPY */
+/* ====================== */
 
-function copyAll() {
+function manualLoad(){
+  load();
+}
 
-  if (!lastData.length) {
+function copyAllForces(){
+
+  if(!lastLoadedData.length){
     alert("Keine Daten vorhanden");
     return;
   }
 
-  const text = lastData.map(x => {
+  const text = lastLoadedData.map(x=>{
     const r = parse(x.meldung);
     return [
       r.staffel,
@@ -353,14 +312,9 @@ function copyAll() {
   alert("Kopiert");
 }
 
-/* ========================= */
+/* ====================== */
 
-function manualLoad() {
-  load();
-}
-
-/* AUTO REFRESH */
-setInterval(load, 10000);
+setInterval(load,10000);
 
 </script>
 
