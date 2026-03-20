@@ -830,8 +830,8 @@
 
     const { width, height } = page.getSize();
 
-    const startY = height - 140;
-    const rowHeight = 47;
+    const startY = height - 135;
+    const rowHeight = 38;
 
     const x = {
       staffel: 53,
@@ -875,11 +875,25 @@
 
     // 🔥 DATEINAME GENERIEREN
     const now = new Date();
+    const dateText =
+          String(now.getDate()).padStart(2, "0") + "." +
+          String(now.getMonth() + 1).padStart(2, "0") + "." +
+          now.getFullYear();
+
+    page.drawText(dateText, {
+          x: width - 146,
+          y: height - 40,
+          size: 17,
+          font: boldFont,
+          color: rgb(0, 0, 0)
+        });
+
     const fileName =
       now.getFullYear().toString() +
       String(now.getMonth() + 1).padStart(2, "0") +
       String(now.getDate()).padStart(2, "0") +
       "_Meldeboard.pdf";
+
 
     // 🔥 DOWNLOAD TRIGGERN
     const link = document.createElement("a");
