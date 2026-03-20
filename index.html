@@ -958,21 +958,18 @@
           dateParts.dd +
           "_Meldeboard.pdf";
 
-        const link = document.createElement("a");
         const blobUrl = URL.createObjectURL(blob);
-        link.href = blobUrl;
-        link.download = fileName;
 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Öffnet PDF im neuen Tab
+        window.open(blobUrl, "_blank");
 
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-      } catch (e) {
-        console.error(e);
-        alert("PDF konnte nicht erstellt werden: " + (e instanceof Error ? e.message : "Unbekannter Fehler"));
-      }
-    }
+        // optional: Speicher wieder freigeben
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+          } catch (e) {
+            console.error(e);
+            alert("PDF konnte nicht erstellt werden: " + (e instanceof Error ? e.message : "Unbekannter Fehler"));
+          }
+        }
 
     function scheduleAutoRefresh() {
       setTimeout(async function autoRefresh() {
