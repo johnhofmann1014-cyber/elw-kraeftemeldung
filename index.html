@@ -330,6 +330,53 @@
         width: 100%;
         max-width: 100%;
       }
+
+	  @media print {
+  body {
+    background: white;
+    padding: 0;
+  }
+
+  .card,
+  .topControls,
+  .copyArea,
+  .muted,
+  #status {
+    display: none !important;
+  }
+
+  .boardOuter {
+    width: 100%;
+    transform: none !important;
+    background: #e53935;
+  }
+
+  .boardScaleStage {
+    transform: none !important;
+  }
+
+  .boardViewport {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .boardCell {
+    font-size: 18px;
+    min-height: 60px;
+  }
+
+  .boardHeaderCell {
+    font-size: 14px;
+  }
+
+  .legend {
+    font-size: 14px;
+  }
+
+  .standRow {
+    font-size: 12px;
+  }
+	  } 
     }
   </style>
 </head>
@@ -354,6 +401,7 @@
           <div class="buttonRow">
             <button onclick="manualLoad()">Meldungen laden</button>
             <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
+			<button onclick="printBoard()">Als PDF speichern</button>
           </div>
 
           <div id="status" class="statusLine">
@@ -804,6 +852,10 @@
 
     window.addEventListener("resize", fitBoardToViewport);
     scheduleAutoRefresh();
+
+	function printBoard() {
+  window.print();
+	} 
   </script>
 
 </body>
