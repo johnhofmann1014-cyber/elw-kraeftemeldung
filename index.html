@@ -834,25 +834,25 @@
         const { width, height } = page.getSize();
 
         const startY = height - 140;
-        const rowHeight = 47.4;
+        const rowHeight = 47;
 
         const x = {
-          staffel: 49,
-          ankunft: 151,
-          zf: 231,
-          gf: 276,
-          hf: 327,
-          zh: 397,
-          sth: 456,
-          soh: 512,
-          arzt: 559,
-          br: 598,
-          ta: 639,
-          abreise: 686
+          staffel: 55,
+          ankunft: 165,
+          zf: 245,
+          gf: 295,
+          hf: 350,
+          zh: 415,
+          sth: 480,
+          soh: 540,
+          arzt: 590,
+          br: 630,
+          ta: 670,
+          abreise: 730
         };
 
         const normal = {
-          size: 18,
+          size: 19,
           font,
           color: rgb(0, 0, 0)
         };
@@ -866,7 +866,7 @@
         const rows = getRowsForPdf();
 
         rows.forEach((row, index) => {
-          const y = startY - index * rowHeight;
+          const y = startY - index * rowHeight -8;
 
           if (safeText(row.staffelAbk)) {
             page.drawText(safeText(row.staffelAbk), { x: x.staffel, y, ...normal });
