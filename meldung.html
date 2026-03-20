@@ -239,6 +239,76 @@
   </div>
 
   <script>
+    const STAFFEL_PASSWORT = {
+      "1970": "ASB RHS Chemnitz",
+      "1960": "ASB RHS Dresden",
+      "1750": "ASB RHS Ostthüringen",
+      "1950": "ASB RHS Zwickau",
+      "1910": "BRH RHS Kamenzer Land",
+      "1930": "BRH RHS Landkreis Leipzig",
+      "1720": "BRH RHS Mittelsachsen",
+      "1920": "BRH RHS Sachsen Ost",
+      "1940": "BRH RHS Südwestsachsen",
+      "1710": "BRH RHS Thüringen Südost",
+      "1890": "DLRG RHS Bezirk Leipzig",
+      "1860": "DRK RHS Aue Schwarzenberg",
+      "1840": "DRK RHS Freital",
+      "1810": "DRK RHS Görlitz",
+      "1850": "DRK RHS Leipzig",
+      "1820": "DRK RHS Löbau",
+      "1980": "JUH RHS Dresden",
+      "1990": "JUH RHS Leipzig"
+      };
+
+    const ADMIN_PASSWORT = "1410";
+
+    let isAdmin = false;
+
+function askPasswordOnLoad() {
+  let pw = prompt("Bitte Passwort eingeben:");
+
+  if (!pw) {
+    alert("Kein Zugriff");
+    document.body.innerHTML = "<h2>Zugriff verweigert</h2>";
+    return;
+  }
+
+  if (pw === ADMIN_PASSWORT) {
+    isAdmin = true;
+    enableAdminMode();
+    return;
+  }
+
+  const staffel = STAFFEL_PASSWORT[pw];
+
+  if (!staffel) {
+    alert("Falsches Passwort");
+    document.body.innerHTML = "<h2>Zugriff verweigert</h2>";
+    return;
+  }
+
+  setStaffelLocked(staffel);
+}
+
+    function setStaffelLocked(staffelName) {
+  const select = document.getElementById("staffel");
+
+  select.value = staffelName;
+  select.disabled = true;
+
+  // optional visuell grau machen
+  select.style.background = "#ddd";
+}
+
+function enableAdminMode() {
+  const select = document.getElementById("staffel");
+
+  select.disabled = false;
+  select.style.background = "#fff";
+
+  console.log("Admin-Modus aktiv");
+}
+    
     const SUPABASE_URL = "https://wjqltuuebwxcymdbydwl.supabase.co/rest/v1/kraeftemeldung";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqcWx0dXVlYnd4Y3ltZGJ5ZHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzAwNTgsImV4cCI6MjA4OTI0NjA1OH0.amTfF56s3OlLeE_H8P_-c_hA9M6IEBu9kF2Z7fdiAmk";
 
@@ -346,6 +416,12 @@
     }
 
     updatePreview();
+
+    window.addEventListener("load", askPasswordOnLoad);
+
+    alert("Angemeldet als: " + staffelName);
+    alert("Admin-Modus aktiv");
+    
   </script>
 
 </body>
