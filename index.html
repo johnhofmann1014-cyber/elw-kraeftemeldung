@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VSR Meldeboard</title>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -114,10 +117,12 @@
       margin-top: 0;
     }
 
-   .statusLine {
-  min-height: 24px;
-  margin-top: 8px;
-}
+    .statusLine {
+      min-height: 24px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+    }
 
     .ok {
       color: #0a7a2f;
@@ -196,18 +201,18 @@
       width: 100%;
       display: grid;
       grid-template-columns:
-        165px   /* StaffelAbk */
-        110px   /* Ankunft */
-        50px    /* ZF */
-        50px    /* GF */
-        72px    /* HF */
-        72px    /* zH */
-        112px   /* STH */
-        72px    /* SOH */
-        62px    /* Arzt */
-        62px    /* Berufsretter */
-        62px    /* Tierarzt */
-        110px;  /* Abreise */
+        165px
+        110px
+        50px
+        50px
+        72px
+        72px
+        112px
+        72px
+        62px
+        62px
+        62px
+        110px;
       column-gap: 25px;
       row-gap: 0;
       align-items: stretch;
@@ -330,53 +335,6 @@
         width: 100%;
         max-width: 100%;
       }
-
-	  @media print {
-  body {
-    background: white;
-    padding: 0;
-  }
-
-  .card,
-  .topControls,
-  .copyArea,
-  .muted,
-  #status {
-    display: none !important;
-  }
-
-  .boardOuter {
-    width: 100%;
-    transform: none !important;
-    background: #e53935;
-  }
-
-  .boardScaleStage {
-    transform: none !important;
-  }
-
-  .boardViewport {
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  .boardCell {
-    font-size: 18px;
-    min-height: 60px;
-  }
-
-  .boardHeaderCell {
-    font-size: 14px;
-  }
-
-  .legend {
-    font-size: 14px;
-  }
-
-  .standRow {
-    font-size: 12px;
-  }
-	  } 
     }
   </style>
 </head>
@@ -401,12 +359,13 @@
           <div class="buttonRow">
             <button onclick="manualLoad()">Meldungen laden</button>
             <button onclick="copyAllForces()">Alle Kräfte kopieren</button>
-			<button onclick="printBoard()">Als PDF speichern</button>
+            <button onclick="saveBoardAsPdfAndPrint()">Als PDF speichern</button>
           </div>
 
           <div id="status" class="statusLine">
-  <div class="ok">0 aktuelle Meldung(en) geladen.</div>
-</div>
+            <div class="ok">0 aktuelle Meldung(en) geladen.</div>
+          </div>
+
           <div class="muted">angezeigt werden nur Meldungen der letzten 6 Stunden</div>
         </div>
       </div>
@@ -741,8 +700,6 @@
         return;
       }
 
-      
-
       try {
         const res = await fetch(url, {
           method: "POST",
@@ -776,22 +733,22 @@
 
         lastLoadedData = filtered;
 
-        status.innerHTML = '<div class="ok">' + filtered.length + ' aktuelle Meldung(en) 	geladen.</div>';
+        status.innerHTML = '<div class="ok">' + filtered.length + ' aktuelle Meldung(en) geladen.</div>';
 
-	if (filtered.length === 0) {
-  	list.innerHTML = "";
-  	return;
-	}
+        if (filtered.length === 0) {
+          list.innerHTML = "";
+          return;
+        }
 
-	renderBoard(filtered, hasNewEntry);
+        renderBoard(filtered, hasNewEntry);
 
       } catch (err) {
         if (showErrors) {
-  		status.innerHTML =
-    		'<div class="error">' +
-    		(err instanceof Error ? err.message : "Unbekannter Fehler") +
-    		'</div>';
-	}
+          status.innerHTML =
+            '<div class="error">' +
+            (err instanceof Error ? err.message : "Unbekannter Fehler") +
+            '</div>';
+        }
       }
     }
 
@@ -840,6 +797,171 @@
       await copyHtmlAndText(htmlTable, plainText, "Alle Kräfte als Tabelle kopiert");
     }
 
+    function safeText(value) {
+      return String(value ?? "").trim();
+    }
+
+    function getRowsForPdf() {
+      const rows = lastLoadedData.map((item) => parseForceLine(item.meldung));
+      while (rows.length < TOTAL_BOARD_ROWS) {
+        rows.push(emptyBoardRow());
+      }
+      return rows.slice(0, TOTAL_BOARD_ROWS);
+    }
+
+    async function saveBoardAsPdfAndPrint() {
+      try {
+        if (!lastLoadedData.length) {
+          alert("Es sind keine aktuellen Kräftemeldungen vorhanden.");
+          return;
+        }
+
+        const templateUrl = "3_Meldeboard.pdf";
+        const existingPdfBytes = await fetch(templateUrl).then((res) => {
+          if (!res.ok) {
+            throw new Error("PDF-Vorlage konnte nicht geladen werden.");
+          }
+          return res.arrayBuffer();
+        });
+
+        const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        const page = pdfDoc.getPage(0);
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+        const { width, height } = page.getSize();
+
+        const startY = height - 122;
+        const rowHeight = 47.4;
+
+        const x = {
+          staffel: 49,
+          ankunft: 151,
+          zf: 231,
+          gf: 276,
+          hf: 327,
+          zh: 397,
+          sth: 456,
+          soh: 512,
+          arzt: 559,
+          br: 598,
+          ta: 639,
+          abreise: 686
+        };
+
+        const normal = {
+          size: 18,
+          font,
+          color: rgb(0, 0, 0)
+        };
+
+        const small = {
+          size: 16,
+          font,
+          color: rgb(0, 0, 0)
+        };
+
+        const rows = getRowsForPdf();
+
+        rows.forEach((row, index) => {
+          const y = startY - index * rowHeight;
+
+          if (safeText(row.staffelAbk)) {
+            page.drawText(safeText(row.staffelAbk), { x: x.staffel, y, ...normal });
+          }
+
+          if (safeText(row.ankunft)) {
+            page.drawText(safeText(row.ankunft), { x: x.ankunft, y, ...small });
+          }
+
+          if (safeText(row.zf)) {
+            page.drawText(safeText(row.zf), { x: x.zf, y, ...normal });
+          }
+
+          if (safeText(row.gf)) {
+            page.drawText(safeText(row.gf), { x: x.gf, y, ...normal });
+          }
+
+          if (safeText(row.hf)) {
+            page.drawText(safeText(row.hf), { x: x.hf, y, ...normal });
+          }
+
+          if (safeText(row.zh)) {
+            page.drawText(safeText(row.zh), { x: x.zh, y, ...normal });
+          }
+
+          if (safeText(row.sth)) {
+            page.drawText(safeText(row.sth), { x: x.sth, y, ...normal });
+          }
+
+          if (safeText(row.soh)) {
+            page.drawText(safeText(row.soh), { x: x.soh, y, ...normal });
+          }
+
+          if (safeText(row.arzt)) {
+            page.drawText(safeText(row.arzt), { x: x.arzt, y, ...small });
+          }
+
+          if (safeText(row.berufsretter)) {
+            page.drawText(safeText(row.berufsretter), { x: x.br, y, ...small });
+          }
+
+          if (safeText(row.tierarzt)) {
+            page.drawText(safeText(row.tierarzt), { x: x.ta, y, ...small });
+          }
+
+          if (safeText(row.abreise)) {
+            page.drawText(safeText(row.abreise), { x: x.abreise, y, ...small });
+          }
+        });
+
+        const now = new Date();
+        const dateText =
+          String(now.getDate()).padStart(2, "0") + "." +
+          String(now.getMonth() + 1).padStart(2, "0") + "." +
+          now.getFullYear();
+
+        page.drawText(dateText, {
+          x: width - 142,
+          y: height - 34,
+          size: 14,
+          font: boldFont,
+          color: rgb(0, 0, 0)
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const printWindow = window.open(blobUrl, "_blank");
+
+        if (!printWindow) {
+          alert("Pop-up blockiert. Bitte Pop-ups erlauben und erneut versuchen.");
+          return;
+        }
+
+        const tryPrint = () => {
+          try {
+            printWindow.focus();
+            printWindow.print();
+          } catch (e) {
+            console.error(e);
+          }
+        };
+
+        setTimeout(tryPrint, 700);
+        setTimeout(tryPrint, 1400);
+        setTimeout(tryPrint, 2200);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      } catch (e) {
+        console.error(e);
+        alert("PDF konnte nicht erstellt werden: " + (e instanceof Error ? e.message : "Unbekannter Fehler"));
+      }
+    }
+
     function scheduleAutoRefresh() {
       setTimeout(async function autoRefresh() {
         const password = document.getElementById("pw").value.trim();
@@ -852,10 +974,6 @@
 
     window.addEventListener("resize", fitBoardToViewport);
     scheduleAutoRefresh();
-
-	function printBoard() {
-  window.print();
-	} 
   </script>
 
 </body>
