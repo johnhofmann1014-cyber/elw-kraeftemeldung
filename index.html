@@ -192,15 +192,15 @@
     }
 
     .boardTitleBox {
-    height: 42px;
-    border: 3px solid #444;
-    background: #e8e8e8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 700;
-    color: #111;
+      height: 42px;
+      border: 3px solid #444;
+      background: #e8e8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
     }
 
     .boardGrid {
@@ -421,6 +421,23 @@
       return map[name] || fullName || "";
     }
 
+    function getTodayDisplayDate() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      return `${dd}.${mm}.${yyyy}`;
+    }
+
+    function getTodayParts() {
+      const now = new Date();
+      return {
+        yyyy: String(now.getFullYear()),
+        mm: String(now.getMonth() + 1).padStart(2, "0"),
+        dd: String(now.getDate()).padStart(2, "0")
+      };
+    }
+
     function parseForceLine(line) {
       const parts = String(line || "")
         .split(";")
@@ -571,15 +588,6 @@
       }
     }
 
-
-    function getTodayDisplayDate() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${dd}.${mm}.${yyyy}`;
-}
-    
     function renderBoard(data, highlight = false) {
       const list = document.getElementById("list");
       const rows = buildBoardRows(data);
@@ -824,113 +832,147 @@
       return rows.slice(0, TOTAL_BOARD_ROWS);
     }
 
-    function getTodayParts() {
-  const now = new Date();
-  return {
-    yyyy: String(now.getFullYear()),
-    mm: String(now.getMonth() + 1).padStart(2, "0"),
-    dd: String(now.getDate()).padStart(2, "0")
-  };
-}
-    
     async function saveBoardAsPdfAndDownload() {
-  try {
-    if (!lastLoadedData.length) {
-      alert("Es sind keine aktuellen Kräftemeldungen vorhanden.");
-      return;
+      try {
+        if (!lastLoadedData.length) {
+          alert("Es sind keine aktuellen Kräftemeldungen vorhanden.");
+          return;
+        }
+
+        const templateUrl = "3_Meldeboard.pdf";
+        const existingPdfBytes = await fetch(templateUrl).then((res) => {
+          if (!res.ok) throw new Error("PDF-Vorlage konnte nicht geladen werden.");
+          return res.arrayBuffer();
+        });
+
+        const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        const page = pdfDoc.getPage(0);
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+        const { width, height } = page.getSize();
+
+        const startY = height - 140;
+        const rowHeight = 47;
+
+        const x = {
+          staffel: 55,
+          ankunft: 165,
+          zf: 245,
+          gf: 295,
+          hf: 350,
+          zh: 415,
+          sth: 480,
+          soh: 540,
+          arzt: 590,
+          br: 630,
+          ta: 670,
+          abreise: 730
+        };
+
+        const normal = {
+          size: 20,
+          font,
+          color: rgb(0, 0, 0)
+        };
+
+        const small = {
+          size: 16,
+          font,
+          color: rgb(0, 0, 0)
+        };
+
+        const rows = getRowsForPdf();
+
+        rows.forEach((row, index) => {
+          const y = startY - index * rowHeight - 8;
+
+          if (safeText(row.staffelAbk)) {
+            page.drawText(safeText(row.staffelAbk), { x: x.staffel, y, ...normal });
+          }
+
+          if (safeText(row.ankunft)) {
+            page.drawText(safeText(row.ankunft), { x: x.ankunft, y, ...small });
+          }
+
+          if (safeText(row.zf)) {
+            page.drawText(safeText(row.zf), { x: x.zf, y, ...normal });
+          }
+
+          if (safeText(row.gf)) {
+            page.drawText(safeText(row.gf), { x: x.gf, y, ...normal });
+          }
+
+          if (safeText(row.hf)) {
+            page.drawText(safeText(row.hf), { x: x.hf, y, ...normal });
+          }
+
+          if (safeText(row.zh)) {
+            page.drawText(safeText(row.zh), { x: x.zh, y, ...normal });
+          }
+
+          if (safeText(row.sth)) {
+            page.drawText(safeText(row.sth), { x: x.sth, y, ...normal });
+          }
+
+          if (safeText(row.soh)) {
+            page.drawText(safeText(row.soh), { x: x.soh, y, ...normal });
+          }
+
+          if (safeText(row.arzt)) {
+            page.drawText(safeText(row.arzt), { x: x.arzt, y, ...small });
+          }
+
+          if (safeText(row.berufsretter)) {
+            page.drawText(safeText(row.berufsretter), { x: x.br, y, ...small });
+          }
+
+          if (safeText(row.tierarzt)) {
+            page.drawText(safeText(row.tierarzt), { x: x.ta, y, ...small });
+          }
+
+          if (safeText(row.abreise)) {
+            page.drawText(safeText(row.abreise), { x: x.abreise, y, ...small });
+          }
+        });
+
+        const dateParts = getTodayParts();
+        const dateText = `${dateParts.dd}.${dateParts.mm}.${dateParts.yyyy}`;
+
+        page.drawText(dateText, {
+          x: width - 142,
+          y: height - 34,
+          size: 14,
+          font: boldFont,
+          color: rgb(0, 0, 0)
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+
+        const fileName =
+          dateParts.yyyy +
+          dateParts.mm +
+          dateParts.dd +
+          "_Meldeboard.pdf";
+
+        const link = document.createElement("a");
+        const blobUrl = URL.createObjectURL(blob);
+        link.href = blobUrl;
+        link.download = fileName;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      } catch (e) {
+        console.error(e);
+        alert("PDF konnte nicht erstellt werden: " + (e instanceof Error ? e.message : "Unbekannter Fehler"));
+      }
     }
-
-    const templateUrl = "3_Meldeboard.pdf";
-    const existingPdfBytes = await fetch(templateUrl).then((res) => {
-      if (!res.ok) throw new Error("PDF-Vorlage konnte nicht geladen werden.");
-      return res.arrayBuffer();
-    });
-
-    const { PDFDocument, StandardFonts, rgb } = PDFLib;
-
-    const pdfDoc = await PDFDocument.load(existingPdfBytes);
-    const page = pdfDoc.getPage(0);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-    const { width, height } = page.getSize();
-
-    const startY = height - 135;
-    const rowHeight = 38;
-
-    const x = {
-      staffel: 53,
-      ankunft: 117,
-      zf: 176,
-      gf: 210,
-      hf: 255,
-      zh: 303,
-      sth: 348,
-      soh: 397,
-      arzt: 432,
-      br: 465,
-      ta: 498,
-      abreise: 510
-    };
-
-    const normal = { size: 19, font, color: rgb(0, 0, 0) };
-    const small = { size: 17, font, color: rgb(0, 0, 0) };
-
-    const rows = getRowsForPdf();
-
-    rows.forEach((row, index) => {
-      const y = startY - index * rowHeight - 8;
-
-      if (row.staffelAbk) page.drawText(row.staffelAbk, { x: x.staffel, y, ...normal });
-      if (row.ankunft) page.drawText(row.ankunft, { x: x.ankunft, y, ...small });
-      if (row.zf) page.drawText(row.zf, { x: x.zf, y, ...normal });
-      if (row.gf) page.drawText(row.gf, { x: x.gf, y, ...normal });
-      if (row.hf) page.drawText(row.hf, { x: x.hf, y, ...normal });
-      if (row.zh) page.drawText(row.zh, { x: x.zh, y, ...normal });
-      if (row.sth) page.drawText(row.sth, { x: x.sth, y, ...normal });
-      if (row.soh) page.drawText(row.soh, { x: x.soh, y, ...normal });
-      if (row.arzt) page.drawText(row.arzt, { x: x.arzt, y, ...small });
-      if (row.berufsretter) page.drawText(row.berufsretter, { x: x.br, y, ...small });
-      if (row.tierarzt) page.drawText(row.tierarzt, { x: x.ta, y, ...small });
-      if (row.abreise) page.drawText(row.abreise, { x: x.abreise, y, ...small });
-    });
-
-    const dateText = `${dateParts.dd}.${dateParts.mm}.${dateParts.yyyy}`;
-
-  page.drawText(dateText, {
-    x: width - 142,
-    y: height - 34,
-    size: 14,
-    font: boldFont || font,
-    color: rgb(0, 0, 0)
-  });
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-
-    // 🔥 DATEINAME GENERIEREN
-    const dateParts = getTodayParts();
-
-    const fileName =
-    dateParts.yyyy +
-    dateParts.mm +
-    dateParts.dd +
-    "_Meldeboard.pdf";
-
-
-    // 🔥 DOWNLOAD TRIGGERN
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  } catch (e) {
-    console.error(e);
-    alert("PDF konnte nicht erstellt werden.");
-  }
-}
 
     function scheduleAutoRefresh() {
       setTimeout(async function autoRefresh() {
@@ -946,12 +988,11 @@
     scheduleAutoRefresh();
 
     document.getElementById("pw").addEventListener("keydown", function (e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    manualLoad();
-  }
-});
-    
+      if (e.key === "Enter") {
+        e.preventDefault();
+        manualLoad();
+      }
+    });
   </script>
 
 </body>
