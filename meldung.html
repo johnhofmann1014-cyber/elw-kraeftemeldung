@@ -295,9 +295,9 @@ function askPasswordOnLoad() {
 
   select.value = staffelName;
   select.disabled = true;
-
-  // optional visuell grau machen
   select.style.background = "#ddd";
+
+  alert("Angemeldet als: " + staffelName);
 }
 
 function enableAdminMode() {
@@ -307,6 +307,7 @@ function enableAdminMode() {
   select.style.background = "#fff";
 
   console.log("Admin-Modus aktiv");
+  alert("Admin-Modus aktiv");
 }
     
     const SUPABASE_URL = "https://wjqltuuebwxcymdbydwl.supabase.co/rest/v1/kraeftemeldung";
@@ -419,8 +420,7 @@ function enableAdminMode() {
 
     window.addEventListener("load", askPasswordOnLoad);
 
-    alert("Angemeldet als: " + staffelName);
-    alert("Admin-Modus aktiv");
+    
     
   </script>
 
