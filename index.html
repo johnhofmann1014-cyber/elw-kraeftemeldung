@@ -192,9 +192,15 @@
     }
 
     .boardTitleBox {
-      height: 42px;
-      border: 3px solid #444;
-      background: #e8e8e8;
+    height: 42px;
+    border: 3px solid #444;
+    background: #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
     }
 
     .boardGrid {
@@ -565,6 +571,15 @@
       }
     }
 
+
+    function getTodayDisplayDate() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${dd}.${mm}.${yyyy}`;
+}
+    
     function renderBoard(data, highlight = false) {
       const list = document.getElementById("list");
       const rows = buildBoardRows(data);
@@ -597,7 +612,7 @@
                 <div class="boardInner">
                   <div class="boardTitleWrap">
                     <div class="boardTitle">Meldeboard</div>
-                    <div class="boardTitleBox"></div>
+                    <div class="boardTitleBox">${escapeHtml(getTodayDisplayDate())}</div>
                   </div>
 
                   <div class="boardGrid boardHeader">
@@ -809,6 +824,15 @@
       return rows.slice(0, TOTAL_BOARD_ROWS);
     }
 
+    function getTodayParts() {
+  const now = new Date();
+  return {
+    yyyy: String(now.getFullYear()),
+    mm: String(now.getMonth() + 1).padStart(2, "0"),
+    dd: String(now.getDate()).padStart(2, "0")
+  };
+}
+    
     async function saveBoardAsPdfAndDownload() {
   try {
     if (!lastLoadedData.length) {
@@ -827,6 +851,7 @@
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
     const page = pdfDoc.getPage(0);
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     const { width, height } = page.getSize();
 
@@ -870,16 +895,26 @@
       if (row.abreise) page.drawText(row.abreise, { x: x.abreise, y, ...small });
     });
 
+    const dateText = `${dateParts.dd}.${dateParts.mm}.${dateParts.yyyy}`;
+
+  page.drawText(dateText, {
+    x: width - 142,
+    y: height - 34,
+    size: 14,
+    font: boldFont || font,
+    color: rgb(0, 0, 0)
+  });
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
 
     // 🔥 DATEINAME GENERIEREN
-    const now = new Date();
+    const dateParts = getTodayParts();
+
     const fileName =
-      now.getFullYear().toString() +
-      String(now.getMonth() + 1).padStart(2, "0") +
-      String(now.getDate()).padStart(2, "0") +
-      "_Meldeboard.pdf";
+    dateParts.yyyy +
+    dateParts.mm +
+    dateParts.dd +
+    "_Meldeboard.pdf";
 
 
     // 🔥 DOWNLOAD TRIGGERN
